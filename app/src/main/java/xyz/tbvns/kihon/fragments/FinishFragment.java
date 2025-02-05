@@ -1,4 +1,4 @@
-package xyz.tbvns.kihon;
+package xyz.tbvns.kihon.fragments;
 
 import android.os.Bundle;
 import android.widget.Button;
@@ -9,12 +9,9 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import xyz.tbvns.kihon.R;
+import xyz.tbvns.kihon.ShareUtils;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link FinishFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FinishFragment extends Fragment {
 
     DocumentFile pdf;

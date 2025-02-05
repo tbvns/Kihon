@@ -17,7 +17,7 @@
             android:theme="@style/Theme.KeeHon"
             tools:targetApi="31">
         <activity
-                android:name=".MainActivity"
+                android:name=".fragments.MainActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

@@ -1,4 +1,4 @@
-package xyz.tbvns.kihon;
+package xyz.tbvns.kihon.fragments;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -18,12 +18,12 @@ import androidx.fragment.app.FragmentManager;
 import com.google.android.material.chip.Chip;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import xyz.tbvns.kihon.Constant;
+import xyz.tbvns.kihon.PdfUtils;
+import xyz.tbvns.kihon.R;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 public class FileFragment extends Fragment {
     private List<DocumentFile> files;
@@ -45,8 +45,9 @@ public class FileFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_files, container, false);
         LinearLayout layout = view.findViewById(R.id.fileList);
+        List<DocumentFile> sortedFiles = sort(files);
 
-        for (DocumentFile file : files) {
+        for (DocumentFile file : sortedFiles) {
             if (file.isDirectory()) {
                 Button folderButton = new Button(requireContext());
                 folderButton.setText(file.getName());
@@ -89,10 +90,11 @@ public class FileFragment extends Fragment {
 
                 List<DocumentFile> pngs = new ArrayList<>();
 
-                for (DocumentFile file : selectedFiles) {
+                for (DocumentFile file : sort(selectedFiles)) {
                     DocumentFile e = extractZip(context, file);
                     if (e!=null) {
-                        for (DocumentFile listFile : e.listFiles()) {
+                        for (DocumentFile listFile : sort(List.of(e.listFiles()))) {
+                            System.out.println(e.getName());
                             if (listFile.isFile()) {
                                 pngs.add(listFile);
                             }
@@ -114,7 +116,6 @@ public class FileFragment extends Fragment {
 
     private DocumentFile extractZip(Context context, DocumentFile zipFile) {
         try {
-            // Step 1: Copy CBZ file to cache directory
             File tempZipFile = new File(context.getCacheDir(), zipFile.getName());
             InputStream inputStream = context.getContentResolver().openInputStream(zipFile.getUri());
             FileOutputStream fileOutputStream = new FileOutputStream(tempZipFile);
@@ -187,5 +188,24 @@ public class FileFragment extends Fragment {
             });
         }
         return null;
+    }
+
+    public static List<DocumentFile> sort(List<DocumentFile> doc) {
+        List<DocumentFile> unsorted = new ArrayList<>();
+        HashMap<Integer, DocumentFile> filesID = new HashMap<>();
+        for (DocumentFile file : doc) {
+            try {
+                int id = Integer.parseInt(file.getName().replaceAll("\\D", "").replace(".", "").strip());
+                filesID.put(id, file);
+            } catch (Exception e) {
+                unsorted.add(file);
+            }
+        }
+        List<DocumentFile> sortedFiles = new ArrayList<>();
+        filesID.keySet().stream().sorted().forEach(id -> {
+            sortedFiles.add(filesID.get(id));
+        });
+        sortedFiles.addAll(unsorted);
+        return sortedFiles;
     }
 }

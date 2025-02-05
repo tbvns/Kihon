@@ -4,7 +4,7 @@
                                                    android:layout_width="match_parent"
                                                    android:layout_height="match_parent"
                                                    android:orientation="vertical"
-                                                   tools:context=".FileFragment" android:padding="10dp">
+                                                   tools:context=".fragments.FileFragment" android:padding="10dp">
     <ScrollView
             android:layout_width="match_parent"
             android:layout_height="660dp"

@@ -1,4 +1,4 @@
-package xyz.tbvns.kihon;
+package xyz.tbvns.kihon.fragments;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -12,6 +12,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
+import xyz.tbvns.kihon.Constant;
+import xyz.tbvns.kihon.R;
 
 import java.util.Arrays;
 import java.util.List;

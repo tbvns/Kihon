@@ -6,7 +6,7 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainActivity" android:padding="10dp">
+        tools:context=".fragments.MainActivity" android:padding="10dp">
 
     <Button
             android:text="Select Mihon folder"

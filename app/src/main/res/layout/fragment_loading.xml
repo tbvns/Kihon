@@ -4,7 +4,7 @@
                                                    xmlns:tools="http://schemas.android.com/tools"
                                                    android:layout_width="match_parent"
                                                    android:layout_height="match_parent"
-                                                   tools:context=".LoadingFragment" android:id="@+id/frameLayout">
+                                                   tools:context=".fragments.LoadingFragment" android:id="@+id/frameLayout">
     <LinearLayout
             android:orientation="horizontal"
             android:layout_width="wrap_content"
