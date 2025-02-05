@@ -89,8 +89,12 @@ public class FileFragment extends Fragment {
                         .commit();
 
                 List<DocumentFile> pngs = new ArrayList<>();
-
+                int max = selectedFiles.size();
+                float percent = 0;
                 for (DocumentFile file : sort(selectedFiles)) {
+                    LoadingFragment.message = "Extracting: " + file.getParentFile().getName() + " " + file.getName();
+                    percent += (float) 1 / max * 100;
+                    LoadingFragment.progress = percent / 2;
                     DocumentFile e = extractZip(context, file);
                     if (e!=null) {
                         for (DocumentFile listFile : sort(List.of(e.listFiles()))) {

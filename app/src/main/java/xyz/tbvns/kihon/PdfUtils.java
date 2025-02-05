@@ -11,6 +11,7 @@ import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import xyz.tbvns.kihon.fragments.LoadingFragment;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,9 +40,15 @@ public class PdfUtils {
             Toast.makeText(context, "Generating PDF...", Toast.LENGTH_LONG).show();
         });
 
+        int max = pngFiles.size();
+        float percent = 0;
+
         try {
-            // Iterate over each PNG file
             for (DocumentFile pngFile : pngFiles) {
+                percent += (float) 1 / max * 100;
+                LoadingFragment.progress = 50+(percent/2);
+                LoadingFragment.message = "Generating PDF: " + pngFile.getParentFile().getParentFile().getName() + "-" + pngFile.getParentFile().getName() + ":" + pngFile.getName();
+
                 // Open the PNG image as bytes
                 InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
                 if (imageStream == null) continue;
