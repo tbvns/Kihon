@@ -4,7 +4,7 @@
 
 # Kihon: Mihon Manga to PDF Exporter
 
-Kihon is a simple and efficient tool designed to export your Mihon manga into PDF format. Whether you're looking to read your favorite manga on devices like Amazon Kindle or simply want a more portable format, Kihon has got you covered.
+Kihon is a simple and "efficient" tool designed to export your Mihon manga into PDF format. Whether you're looking to read your favorite manga on devices like Amazon Kindle or simply want a more portable format, Kihon has got you covered.
 
 ## Download
 
