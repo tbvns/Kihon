@@ -58,10 +58,10 @@ public class ExportOptions extends Fragment {
                             (dialog, which) -> generate(0)
                     ).show(getParentFragmentManager(), "warningMemory");
                 } else {
-                    generate(0);
+                    generate(1);
                 }
             } else if (formatSpinner.getSelectedItem().equals("Portable Document Format (PDF)")) {
-                generate(1);
+                generate(0);
             }
         });
         return view;
@@ -228,9 +228,15 @@ public class ExportOptions extends Fragment {
             }
 
             new Handler(Looper.getMainLooper()).post(() -> {
-                manager.beginTransaction()
-                        .replace(R.id.main, new FinishFragment(file))
-                        .commit();
+                if (type == 0) {
+                    manager.beginTransaction()
+                            .replace(R.id.main, new FinishFragment(file, "application/pdf"))
+                            .commit();
+                } else if (type == 1) {
+                    manager.beginTransaction()
+                            .replace(R.id.main, new FinishFragment(file, "application/epub"))
+                            .commit();
+                }
             });
         }).start();
     }

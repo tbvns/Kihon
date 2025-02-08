@@ -15,8 +15,10 @@ import xyz.tbvns.kihon.ShareUtils;
 public class FinishFragment extends Fragment {
 
     DocumentFile pdf;
-    public FinishFragment(DocumentFile pdf) {
+    String type;
+    public FinishFragment(DocumentFile pdf, String type) {
         this.pdf = pdf;
+        this.type = type;
     }
 
     @Override
@@ -25,11 +27,11 @@ public class FinishFragment extends Fragment {
         if (pdf != null) {
             Button sharebutton = view.findViewById(R.id.sharebutton);
             sharebutton.setOnClickListener(v -> {
-                ShareUtils.sharePdfFile(getContext(), pdf);
+                ShareUtils.shareFile(getContext(), pdf, type);
             });
             Button openbutton = view.findViewById(R.id.openbutton);
             openbutton.setOnClickListener(v -> {
-                ShareUtils.openPdfFile(getContext(), pdf);
+                ShareUtils.openFile(getContext(), pdf, type);
             });
             TextView fileName = view.findViewById(R.id.filename);
             fileName.setText("Exported \"" + pdf.getName() + "\"");
