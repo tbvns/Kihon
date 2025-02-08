@@ -36,14 +36,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Button button = findViewById(R.id.button);
+        Button button = findViewById(R.id.selectMihonFolder);
         button.setOnClickListener(a -> {
-            System.out.println("Button !");
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
                     Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
             startActivityForResult(intent, REQUEST_CODE_FOLDER);
+        });
+        button = findViewById(R.id.back);
+        button.setOnClickListener(a -> {
+            if (!FileFragment.previousFolders.isEmpty()) {
+                getSupportFragmentManager().beginTransaction().replace(
+                        R.id.main,
+                        new FileFragment(
+                            List.of(
+                                FileFragment.previousFolders.get(
+                                        FileFragment.previousFolders.size()-1
+                                ).getParentFile().listFiles()
+                            )
+                        )
+                    ).commit();
+                FileFragment.previousFolders.remove(FileFragment.previousFolders.size()-1);
+            }
         });
     }
 
@@ -83,10 +98,6 @@ public class MainActivity extends AppCompatActivity {
             if (file.getName().equals("downloads")) {
                 pickedDir = file;
             }
-        }
-
-        for (DocumentFile file : pickedDir.listFiles()) {
-            System.out.println(file.getName());
         }
         List<DocumentFile> files = Arrays.asList(pickedDir.listFiles());
 

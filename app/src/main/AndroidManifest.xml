@@ -14,11 +14,12 @@
             android:label="Kihon"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
-            android:theme="@style/Theme.KeeHon"
-            tools:targetApi="31">
+            android:theme="@style/Theme.Material3.Dark"
+            tools:targetApi="34">
         <activity
                 android:name=".fragments.MainActivity"
-                android:exported="true">
+                android:exported="true"
+                android:theme="@style/Theme.KeeHon.NoActionbar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

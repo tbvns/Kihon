@@ -1,4 +1,4 @@
-package xyz.tbvns.kihon;
+package xyz.tbvns.kihon.Formats;
 
 import android.content.Context;
 import android.os.Handler;
@@ -11,6 +11,7 @@ import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import xyz.tbvns.kihon.Constant;
 import xyz.tbvns.kihon.fragments.LoadingFragment;
 
 import java.io.ByteArrayOutputStream;
@@ -22,15 +23,6 @@ import java.util.Locale;
 
 public class PdfUtils {
 
-    /**
-     * Creates a PDF document from a list of PNG images.
-     * Each image is placed on its own page scaled to take up the maximum space.
-     * The PDF is saved to the "rendered" folder inside Constant.ExtractedFile with the given name.
-     *
-     * @param context  the Context
-     * @param pngFiles list of DocumentFile objects representing PNG images
-     * @param pdfName  desired PDF file name (without extension)
-     */
     public static DocumentFile createPdfFromPngs(Context context, List<DocumentFile> pngFiles, String pdfName) {
         PDDocument document = new PDDocument();
         // Use a standard page size, e.g., LETTER (you can change this if needed)
@@ -47,7 +39,7 @@ public class PdfUtils {
             for (DocumentFile pngFile : pngFiles) {
                 percent += (float) 1 / max * 100;
                 LoadingFragment.progress = 50+(percent/2);
-                LoadingFragment.message = "Generating PDF: " + pngFile.getParentFile().getParentFile().getName() + "-" + pngFile.getParentFile().getName() + ":" + pngFile.getName();
+                LoadingFragment.message = "Generating PDF: " + pngFile.getParentFile().getName() + " - " + pngFile.getName();
 
                 // Open the PNG image as bytes
                 InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
@@ -120,13 +112,6 @@ public class PdfUtils {
         return null;
     }
 
-    /**
-     * Helper method to convert an InputStream to a byte array.
-     *
-     * @param in InputStream
-     * @return byte[] of the stream's contents
-     * @throws IOException if reading fails
-     */
     private static byte[] toByteArray(InputStream in) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[4096];
