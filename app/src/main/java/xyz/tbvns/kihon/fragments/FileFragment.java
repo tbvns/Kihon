@@ -84,7 +84,7 @@ public class FileFragment extends Fragment {
 
         exportButton.setOnClickListener(c -> {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.main, new ExportOptions(selectedFiles))
+                    .replace(R.id.main, new ExportOptions(selectedFiles, false))
                     .commit();
         });
         return view;

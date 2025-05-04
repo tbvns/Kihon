@@ -29,14 +29,11 @@ public class EpubUtils {
         );
 
         try {
-            // Create an in-memory output stream to build the EPUB (a ZIP file)
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ZipOutputStream zos = new ZipOutputStream(baos);
 
-            // 1. Write the mimetype file (must be the first entry and uncompressed)
             byte[] mimetypeBytes = "application/epub+zip".getBytes(StandardCharsets.US_ASCII);
             ZipEntry mimetypeEntry = new ZipEntry("mimetype");
-            // For a stored (uncompressed) entry you must set size, CRC, etc.
             mimetypeEntry.setMethod(ZipEntry.STORED);
             mimetypeEntry.setSize(mimetypeBytes.length);
             mimetypeEntry.setCompressedSize(mimetypeBytes.length);
@@ -47,7 +44,6 @@ public class EpubUtils {
             zos.write(mimetypeBytes);
             zos.closeEntry();
 
-            // 2. Write META-INF/container.xml
             ZipEntry containerEntry = new ZipEntry("META-INF/container.xml");
             zos.putNextEntry(containerEntry);
             String containerXml =
@@ -60,7 +56,6 @@ public class EpubUtils {
             zos.write(containerXml.getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
 
-            // 3. Build the index.xhtml content (the main HTML file that displays the images)
             StringBuilder indexXhtml = new StringBuilder();
             indexXhtml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                     .append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" ")
@@ -74,11 +69,8 @@ public class EpubUtils {
             int max = pngFiles.size();
             for (int i = 0; i < pngFiles.size(); i++) {
                 DocumentFile pngFile = pngFiles.get(i);
-                // Update progress (like in your PDF generator)
-                float percent = (float)(i + 1) / max * 100;
-                LoadingFragment.progress = 50 + (percent / 4);
+                LoadingFragment.progress += (float) (0.5 / max * 100) * Constant.secondaryActionImpact;
                 LoadingFragment.message = "Adding image: " + pngFile.getName();
-                // Reference the image file which will be stored in OEBPS/images/
                 indexXhtml.append("<img src=\"images/image").append(i)
                         .append(".png\" alt=\"").append(pngFile.getName())
                         .append("\"/><br/>\n");
@@ -86,13 +78,11 @@ public class EpubUtils {
             indexXhtml.append("</body>\n")
                     .append("</html>");
 
-            // Write the index.xhtml file in OEBPS/
             ZipEntry indexEntry = new ZipEntry("OEBPS/index.xhtml");
             zos.putNextEntry(indexEntry);
             zos.write(indexXhtml.toString().getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
 
-            // 4. Build the content.opf file with minimal metadata and a manifest listing all items.
             StringBuilder contentOpf = new StringBuilder();
             contentOpf.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                     .append("<package xmlns=\"http://www.idpf.org/2007/opf\" unique-identifier=\"BookId\" version=\"2.0\">\n")
@@ -103,7 +93,6 @@ public class EpubUtils {
                     .append("</metadata>\n")
                     .append("<manifest>\n")
                     .append("<item id=\"index\" href=\"index.xhtml\" media-type=\"application/xhtml+xml\"/>\n");
-            // Add manifest entries for each image
             for (int i = 0; i < pngFiles.size(); i++) {
                 contentOpf.append("<item id=\"img").append(i)
                         .append("\" href=\"images/image").append(i)
@@ -115,18 +104,15 @@ public class EpubUtils {
                     .append("</spine>\n")
                     .append("</package>\n");
 
-            // Write the content.opf file in OEBPS/
             ZipEntry opfEntry = new ZipEntry("OEBPS/content.opf");
             zos.putNextEntry(opfEntry);
             zos.write(contentOpf.toString().getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
 
-            // 5. Write each PNG image into OEBPS/images/
             for (int i = 0; i < pngFiles.size(); i++) {
                 DocumentFile pngFile = pngFiles.get(i);
                 LoadingFragment.message = "Writing image: " + pngFile.getName();
-                float percent = (float)(i + 1) / max * 100;
-                LoadingFragment.progress = 75 + (percent / 4);
+                LoadingFragment.progress += (float) (0.5 / max * 100) * Constant.secondaryActionImpact;
                 InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
                 if (imageStream == null) continue;
 

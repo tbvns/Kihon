@@ -25,7 +25,6 @@ public class PdfUtils {
 
     public static DocumentFile createPdfFromPngs(Context context, List<DocumentFile> pngFiles, String pdfName) {
         PDDocument document = new PDDocument();
-        // Use a standard page size, e.g., LETTER (you can change this if needed)
         PDRectangle pageSize = PDRectangle.LETTER;
 
         new Handler(Looper.getMainLooper()).post(() -> {
@@ -38,39 +37,32 @@ public class PdfUtils {
         try {
             for (DocumentFile pngFile : pngFiles) {
                 percent += (float) 1 / max * 100;
-                LoadingFragment.progress = 50+(percent/2);
+                LoadingFragment.progress += (float) 1 / max * 100 * Constant.secondaryActionImpact;
                 LoadingFragment.message = "Generating PDF: " + pngFile.getParentFile().getName() + " - " + pngFile.getName();
 
-                // Open the PNG image as bytes
                 InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
                 if (imageStream == null) continue;
                 byte[] imageBytes = toByteArray(imageStream);
                 imageStream.close();
 
-                // Create a PDImageXObject from the image bytes
                 PDImageXObject pdImage = PDImageXObject.createFromByteArray(document, imageBytes, pngFile.getName());
 
-                // Create a new page for the image
                 PDPage page = new PDPage(pageSize);
                 document.addPage(page);
 
-                // Calculate scaling so that the image fills the page as much as possible while keeping its aspect ratio.
                 float imageWidth = pdImage.getWidth();
                 float imageHeight = pdImage.getHeight();
                 float scale = Math.min(pageSize.getWidth() / imageWidth, pageSize.getHeight() / imageHeight);
                 float drawWidth = imageWidth * scale;
                 float drawHeight = imageHeight * scale;
-                // Center the image on the page
                 float posX = (pageSize.getWidth() - drawWidth) / 2;
                 float posY = (pageSize.getHeight() - drawHeight) / 2;
 
-                // Draw the image on the page
                 PDPageContentStream contentStream = new PDPageContentStream(document, page);
                 contentStream.drawImage(pdImage, posX, posY, drawWidth, drawHeight);
                 contentStream.close();
             }
 
-            // Create (or get) the 'rendered' folder inside Constant.ExtractedFile
             DocumentFile renderedFolder = Constant.ExtractedFile.findFile("rendered");
             if (renderedFolder == null) {
                 renderedFolder = Constant.ExtractedFile.createDirectory("rendered");
@@ -79,13 +71,11 @@ public class PdfUtils {
                 throw new IOException("Could not create or find the rendered folder");
             }
 
-            // Create the PDF file (appending .pdf extension)
             DocumentFile pdfFile = renderedFolder.createFile("application/pdf", pdfName + ".pdf");
             if (pdfFile == null) {
                 throw new IOException("Could not create the PDF file");
             }
 
-            // Open an OutputStream to the PDF file and save the document
             OutputStream outputStream = context.getContentResolver().openOutputStream(pdfFile.getUri());
             if (outputStream == null) {
                 throw new IOException("Could not open output stream for PDF file");

@@ -15,6 +15,7 @@ import xyz.tbvns.kihon.R;
 public class LoadingFragment extends Fragment {
     public static float progress;
     public static String message;
+
     public LoadingFragment() {
         progress = 0;
         message = "Starting...";

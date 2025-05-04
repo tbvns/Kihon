@@ -8,10 +8,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
@@ -25,6 +22,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import xyz.tbvns.kihon.Constant;
 import xyz.tbvns.kihon.Formats.EpubUtils;
+import xyz.tbvns.kihon.Formats.ImageUtils;
 import xyz.tbvns.kihon.Formats.PdfUtils;
 import xyz.tbvns.kihon.R;
 
@@ -37,13 +35,14 @@ import java.util.List;
 @AllArgsConstructor
 public class ExportOptions extends Fragment {
     private List<DocumentFile> selectedFiles;
+    private boolean reEncode = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_export_options, container, false);
+        resetConstants();
 
-        String[] formats = {"Electronic Publication (ePUB)", "Portable Document Format (PDF)"/*, "Comic Book Zip (CBZ)"*/};
-
+        String[] formats = {"Electronic Publication (ePUB)", "Portable Document Format (PDF)"};
         Spinner formatSpinner = view.findViewById(R.id.formatSpinner);
         ArrayAdapter<Object> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, formats);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -54,16 +53,75 @@ public class ExportOptions extends Fragment {
             if (formatSpinner.getSelectedItem().equals("Electronic Publication (ePUB)")) {
                 if (selectedFiles.size() >= 5) {
                     new warningDialog(
-                            (dialog, which) -> generate(1),
-                            (dialog, which) -> generate(0)
+                            (dialog, which) -> generate(1, reEncode),
+                            (dialog, which) -> generate(0, reEncode)
                     ).show(getParentFragmentManager(), "warningMemory");
                 } else {
-                    generate(1);
+                    generate(1, reEncode);
                 }
-            } else if (formatSpinner.getSelectedItem().equals("Portable Document Format (PDF)")) {
-                generate(0);
+            } else {
+                generate(0, reEncode);
             }
         });
+
+        Switch reencodeSwitch = view.findViewById(R.id.reencodeSwitch);
+        View reEncodeOptions = view.findViewById(R.id.reEncodeOptions);
+        SeekBar qualitySeekBar = view.findViewById(R.id.qualitySeekbar);
+        TextView qualityText = view.findViewById(R.id.qualityText);
+
+        Switch resizeSwitch = view.findViewById(R.id.reziseImageSwitch);
+        View resizeOptions = view.findViewById(R.id.resizeOptions);
+        SeekBar sizeSeekBar = view.findViewById(R.id.sizeSeekBar);
+        TextView sizeText = view.findViewById(R.id.sizeText);
+
+        Switch grayscaleSwitch = view.findViewById(R.id.grayscaleSwitch);
+
+        CompoundButton.OnCheckedChangeListener switchListener = (buttonView, isChecked) -> {
+            if (reencodeSwitch.isChecked() || resizeSwitch.isChecked() || grayscaleSwitch.isChecked()) {
+                Constant.secondaryActionImpact = 0.25F;
+                reEncode = true;
+            } else {
+                Constant.secondaryActionImpact = 0.5F;
+                reEncode = false;
+            }
+        };
+
+
+        reencodeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Constant.REENCODE_IMAGES = isChecked;
+            reEncodeOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            switchListener.onCheckedChanged(buttonView, isChecked);
+        });
+
+        qualitySeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                Constant.IMAGE_QUALITY = progress;
+                qualityText.setText(progress + "%");
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        resizeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Constant.RESIZE_IMAGES = isChecked;
+            resizeOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            switchListener.onCheckedChanged(buttonView, isChecked);
+        });
+
+        sizeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                Constant.IMAGE_SIZE = progress;
+                sizeText.setText(progress + "%");
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        grayscaleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Constant.GRAYSCALE = isChecked;
+            switchListener.onCheckedChanged(buttonView, isChecked);
+        });
+
         return view;
     }
 
@@ -188,7 +246,7 @@ public class ExportOptions extends Fragment {
         }
     }
 
-    public void generate(int type) {
+    public void generate(int type, boolean reencode) {
         Context context = requireContext();
         FragmentManager manager = getParentFragmentManager();
 
@@ -219,6 +277,14 @@ public class ExportOptions extends Fragment {
 
             DocumentFile file;
 
+            if (reencode) {
+                try {
+                    ImageUtils.processImages(context, pngs);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             if (type == 0) {
                 file = PdfUtils.createPdfFromPngs(context, pngs, name);
             } else if (type == 1) {
@@ -239,6 +305,15 @@ public class ExportOptions extends Fragment {
                 }
             });
         }).start();
+    }
+
+    private void resetConstants() {
+        Constant.REENCODE_IMAGES = false;
+        Constant.IMAGE_QUALITY = 100;
+        Constant.RESIZE_IMAGES = false;
+        Constant.IMAGE_SIZE = 100;
+        Constant.GRAYSCALE = false;
+        Constant.secondaryActionImpact = 0.5F;
     }
 
 }

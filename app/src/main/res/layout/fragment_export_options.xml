@@ -3,14 +3,76 @@
               xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              tools:context=".fragments.ExportOptions" android:orientation="vertical" android:layout_margin="10dp">
+              tools:context=".fragments.ExportOptions" android:orientation="vertical" android:layout_margin="16dp">
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_weight="1">
+            android:layout_height="wrap_content" android:layout_weight="1" android:padding="16dp">
         <Spinner
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/formatSpinner"/>
+                android:layout_height="wrap_content" android:id="@+id/formatSpinner" android:paddingBottom="16dp"/>
+        <Switch
+                android:text="Re-encode images"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/reencodeSwitch" android:paddingBottom="16dp"/>
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:visibility="gone" tools:visibility="visible"
+                android:id="@+id/reEncodeOptions">
+            <TextView
+                    android:text="Image quality"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:id="@+id/textView4" android:paddingBottom="16dp"/>
+            <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:paddingBottom="16dp">
+                <SeekBar
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:id="@+id/qualitySeekbar"
+                        android:layout_weight="1" android:paddingBottom="16dp" android:max="100"
+                        android:progress="100"/>
+                <TextView
+                        android:text="100%"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:id="@+id/qualityText"
+                        android:layout_weight="0.05" android:paddingBottom="16dp"/>
+            </LinearLayout>
+        </LinearLayout>
+        <Switch
+                android:text="Resize images"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/reziseImageSwitch" android:paddingBottom="16dp"/>
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:visibility="gone"
+                android:paddingBottom="16dp" tools:visibility="visible" android:id="@+id/resizeOptions">
+            <TextView
+                    android:text="Image size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:id="@+id/textView5" android:paddingBottom="16dp"/>
+            <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                <SeekBar
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:id="@+id/sizeSeekBar" android:layout_weight="1"
+                        android:paddingBottom="16dp" android:max="100" android:progress="100"
+                        android:indeterminate="false"/>
+                <TextView
+                        android:text="100%"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:id="@+id/sizeText" android:layout_weight="0.05"
+                        android:paddingBottom="16dp"/>
+            </LinearLayout>
+        </LinearLayout>
+        <Switch
+                android:text="Use grayscale"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/grayscaleSwitch" android:paddingBottom="16dp"/>
     </LinearLayout>
     <LinearLayout
             android:orientation="horizontal"
