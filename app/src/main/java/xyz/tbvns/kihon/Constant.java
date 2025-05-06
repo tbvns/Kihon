@@ -1,6 +1,7 @@
 package xyz.tbvns.kihon;
 
 import androidx.documentfile.provider.DocumentFile;
+import xyz.tbvns.kihon.Config.MainConfig;
 
 public class Constant {
     public static DocumentFile ExtractedFile;

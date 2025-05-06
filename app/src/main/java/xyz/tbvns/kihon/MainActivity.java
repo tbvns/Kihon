@@ -1,4 +1,4 @@
-package xyz.tbvns.kihon.fragments;
+package xyz.tbvns.kihon;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -6,14 +6,18 @@ import android.os.Bundle;
 
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageButton;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
-import xyz.tbvns.kihon.Constant;
-import xyz.tbvns.kihon.R;
+import com.google.android.material.appbar.MaterialToolbar;
+import lombok.SneakyThrows;
+import xyz.tbvns.EZConfig;
+import xyz.tbvns.kihon.Config.MainConfig;
+import xyz.tbvns.kihon.fragments.FileFragment;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,16 +25,28 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_FOLDER = 123; // Define your request code
 
+    @SneakyThrows //Yea I know this shit is bad but idc it looks better !
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        EZConfig.setConfigFolder(getFilesDir().getPath());
+        EZConfig.getRegisteredClasses().add(MainConfig.class);
+        EZConfig.load();
+        EZConfig.save();
+
+        ImageButton topAppBar = findViewById(R.id.settingIcon);
+        topAppBar.setOnClickListener(view -> {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+        });
+
     }
 
     @Override
@@ -66,14 +82,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE_FOLDER && resultCode == RESULT_OK && data != null) {
             Uri treeUri = data.getData();
-            // Calculate the permission flags from the returned Intent
             final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             try {
                 getContentResolver().takePersistableUriPermission(treeUri, takeFlags);
-                // You can now use treeUri to access files within the selected folder.
                 Log.d("MainActivity", "Persisted URI permission for: " + treeUri.toString());
-
-                // List files using DocumentFile API
                 listFilesInFolder(treeUri);
             } catch (SecurityException e) {
                 Log.e("MainActivity", "Failed to persist URI permission: " + e.getMessage());
@@ -101,7 +113,6 @@ public class MainActivity extends AppCompatActivity {
         }
         List<DocumentFile> files = Arrays.asList(pickedDir.listFiles());
 
-        // Replace activity content with BlankFragment
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.main, new FileFragment(files))
                 .commit();

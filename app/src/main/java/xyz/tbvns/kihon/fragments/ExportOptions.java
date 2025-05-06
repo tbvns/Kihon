@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import xyz.tbvns.kihon.Config.MainConfig;
 import xyz.tbvns.kihon.Constant;
 import xyz.tbvns.kihon.Formats.EpubUtils;
 import xyz.tbvns.kihon.Formats.ImageUtils;
@@ -35,12 +36,17 @@ import java.util.List;
 @AllArgsConstructor
 public class ExportOptions extends Fragment {
     private List<DocumentFile> selectedFiles;
-    private boolean reEncode = false;
+    private boolean reEncode;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_export_options, container, false);
         resetConstants();
+
+        if (Constant.REENCODE_IMAGES) {
+            ((Switch) view.findViewById(R.id.reencodeSwitch)).setChecked(true);
+            view.findViewById(R.id.reEncodeOptions).setVisibility(View.VISIBLE);
+        }
 
         String[] formats = {"Electronic Publication (ePUB)", "Portable Document Format (PDF)"};
         Spinner formatSpinner = view.findViewById(R.id.formatSpinner);
@@ -258,7 +264,8 @@ public class ExportOptions extends Fragment {
             List<DocumentFile> pngs = new ArrayList<>();
             int max = selectedFiles.size();
             float percent = 0;
-            for (DocumentFile file : sort(selectedFiles)) {
+            List<DocumentFile> files = MainConfig.manualSelection ? selectedFiles : sort(selectedFiles);
+            for (DocumentFile file : files) {
                 LoadingFragment.message = "Extracting: " + file.getName();
                 DocumentFile e = extractZip(context, file);
                 if (e != null) {
@@ -308,7 +315,7 @@ public class ExportOptions extends Fragment {
     }
 
     private void resetConstants() {
-        Constant.REENCODE_IMAGES = false;
+        Constant.REENCODE_IMAGES = MainConfig.reEncodeByDefault;
         Constant.IMAGE_QUALITY = 100;
         Constant.RESIZE_IMAGES = false;
         Constant.IMAGE_SIZE = 100;
