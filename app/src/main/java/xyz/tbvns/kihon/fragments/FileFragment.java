@@ -21,12 +21,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.ListAdapter;
+import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import xyz.tbvns.kihon.Config.MainConfig;
 import xyz.tbvns.kihon.Constant;
+import xyz.tbvns.kihon.FileListAdapter;
 import xyz.tbvns.kihon.Formats.EpubUtils;
 import xyz.tbvns.kihon.Formats.PdfUtils;
 import xyz.tbvns.kihon.R;
@@ -48,54 +52,49 @@ public class FileFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
-    final List<DocumentFile> selectedFiles = new ArrayList<>();
+    final HashSet<DocumentFile> selectedFiles = new HashSet<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_files, container, false);
-        LinearLayout layout = view.findViewById(R.id.fileList);
-        List<DocumentFile> sortedFiles = sort(files);
 
-        for (DocumentFile file : sortedFiles) {
-            if (file.isDirectory()) {
-                Button folderButton = createStyledButton(getContext());
-                folderButton.setText(file.getName());
-                folderButton.setOnClickListener(v -> {
-                    Toast.makeText(requireContext(), "Clicked: " + file.getName(), Toast.LENGTH_SHORT).show();
-                    getParentFragmentManager().beginTransaction()
-                            .replace(R.id.main, new FileFragment(Arrays.asList(file.listFiles())))
-                            .commit();
-                    previousFolders.add(file);
-                    selectedFiles.clear();
-                });
 
-                layout.addView(folderButton);
-            } else if (file.isFile()) {
-                Chip fileChip = new Chip(requireContext());
-                fileChip.setCheckable(true);
-                fileChip.setText(file.getName());
-                fileChip.setOnClickListener(v -> {
-                    if (selectedFiles.contains(file)) {
-                        selectedFiles.remove(file);
-                    } else {
-                        selectedFiles.add(file);
-                    }
-                });
-                layout.addView(fileChip);
-            }
-        }
-
-        Button exportButton = createStyledButton(getContext());
-        exportButton.setText("Export");
-        exportButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.teal_700)));
-        layout.addView(exportButton);
-
+        Button exportButton = view.findViewById(R.id.export);
         exportButton.setOnClickListener(c -> {
-            getFragmentManager().beginTransaction()
-                    .replace(R.id.main, new ExportOptions(selectedFiles, MainConfig.reEncodeByDefault))
-                    .commit();
+            if (!selectedFiles.isEmpty()) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.main, new ExportOptions(selectedFiles, MainConfig.reEncodeByDefault))
+                        .addToBackStack("files")
+                        .commit();
+            } else {
+                Toast.makeText(getContext(), "No chapter selected !", Toast.LENGTH_LONG).show();
+            }
+
         });
+
+        RecyclerView layout = view.findViewById(R.id.filesView);
+        layout.setLayoutManager(new LinearLayoutManager(getContext()));
+        layout.setItemViewCacheSize(10);
+        layout.setHasFixedSize(true);
+
+        FileListAdapter adapter = new FileListAdapter(
+                requireContext(),
+                sort(files),
+                selectedFiles,
+                folder -> {
+                    // onFolderClick
+                    getParentFragmentManager().beginTransaction()
+                            .replace(R.id.main, new FileFragment(Arrays.asList(folder.listFiles())))
+                            .addToBackStack("files")
+                            .commit();
+                    previousFolders.add(folder);
+                    selectedFiles.clear();
+                }
+        );
+
+        layout.setAdapter(adapter);
+
         return view;
     }
 
@@ -104,9 +103,11 @@ public class FileFragment extends Fragment {
         HashMap<Integer, DocumentFile> filesID = new HashMap<>();
         for (DocumentFile file : doc) {
             try {
-                int id = Integer.parseInt(file.getName().replaceAll("\\D", "").replace(".", "").strip());
+                String[] split = file.getUri().getPath().toString().split("/");
+                int id = Integer.parseInt(split[split.length-1].replaceAll("\\D", "").replace(".", "").strip());
                 filesID.put(id, file);
             } catch (Exception e) {
+                System.err.println("Error:" + e.getMessage() + ": " + file.getUri().getPath());
                 unsorted.add(file);
             }
         }

@@ -5,17 +5,19 @@
                                                    android:layout_height="match_parent"
                                                    android:orientation="vertical"
                                                    tools:context=".fragments.FileFragment">
-    <ScrollView
+    <Button
+            android:text="Export"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" android:layout_height="50dp" android:layout_width="0dp"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="#18C28E" android:textColor="#FFFFFF" android:id="@+id/export"/>
+    <androidx.recyclerview.widget.RecyclerView
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-        <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/fileList">
-        </LinearLayout>
-    </ScrollView>
+            app:layout_constraintTop_toTopOf="parent" android:id="@+id/filesView"
+            app:layout_constraintBottom_toTopOf="@+id/export" android:layout_marginBottom="16dp"
+            android:requiresFadingEdge="vertical" android:fadingEdgeLength="16dp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

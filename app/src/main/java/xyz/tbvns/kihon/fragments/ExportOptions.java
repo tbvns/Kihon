@@ -28,14 +28,12 @@ import xyz.tbvns.kihon.Formats.PdfUtils;
 import xyz.tbvns.kihon.R;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class ExportOptions extends Fragment {
-    private List<DocumentFile> selectedFiles;
+    private HashSet<DocumentFile> selectedFiles;
     private boolean reEncode;
 
     @Override
@@ -126,6 +124,11 @@ public class ExportOptions extends Fragment {
         grayscaleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Constant.GRAYSCALE = isChecked;
             switchListener.onCheckedChanged(buttonView, isChecked);
+        });
+
+        Button cancel = view.findViewById(R.id.Cancel);
+        cancel.setOnClickListener(v -> {
+            getParentFragmentManager().popBackStack();
         });
 
         return view;
@@ -227,6 +230,26 @@ public class ExportOptions extends Fragment {
         return sortedFiles;
     }
 
+
+    public static HashSet<DocumentFile> sort(HashSet<DocumentFile> doc) {
+        List<DocumentFile> unsorted = new ArrayList<>();
+        HashMap<Integer, DocumentFile> filesID = new HashMap<>();
+        for (DocumentFile file : doc) {
+            try {
+                int id = Integer.parseInt(file.getName().replaceAll("\\D", "").replace(".", "").strip());
+                filesID.put(id, file);
+            } catch (Exception e) {
+                unsorted.add(file);
+            }
+        }
+        HashSet<DocumentFile> sortedFiles = new HashSet<>();
+        filesID.keySet().stream().sorted().forEach(id -> {
+            sortedFiles.add(filesID.get(id));
+        });
+        sortedFiles.addAll(unsorted);
+        return sortedFiles;
+    }
+
     public static int getAsNumber(String str) {
         if (str == null) {
             return -1;
@@ -259,12 +282,13 @@ public class ExportOptions extends Fragment {
         new Thread(() -> {
             manager.beginTransaction()
                     .replace(R.id.main, new LoadingFragment())
+                    .addToBackStack("export")
                     .commit();
 
             List<DocumentFile> pngs = new ArrayList<>();
             int max = selectedFiles.size();
             float percent = 0;
-            List<DocumentFile> files = MainConfig.manualSelection ? selectedFiles : sort(selectedFiles);
+            HashSet<DocumentFile> files = MainConfig.manualSelection ? selectedFiles : sort(selectedFiles);
             for (DocumentFile file : files) {
                 LoadingFragment.message = "Extracting: " + file.getName();
                 DocumentFile e = extractZip(context, file);
@@ -280,7 +304,7 @@ public class ExportOptions extends Fragment {
                 LoadingFragment.progress = percent / 2;
             }
 
-            String name = selectedFiles.get(0).getParentFile().getName() + " Ch. " + getAsNumber(selectedFiles.get(0).getName()) + " - " + getAsNumber(selectedFiles.get(selectedFiles.size() - 1).getName() + ")");
+            String name = new ArrayList<>(selectedFiles).get(0).getParentFile().getName() + " Ch. " + getAsNumber(new ArrayList<>(selectedFiles).get(0).getName()) + " - " + getAsNumber(new ArrayList<>(selectedFiles).get(selectedFiles.size() - 1).getName() + ")");
 
             DocumentFile file;
 
@@ -302,12 +326,16 @@ public class ExportOptions extends Fragment {
 
             new Handler(Looper.getMainLooper()).post(() -> {
                 if (type == 0) {
+                    manager.popBackStack("export", FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     manager.beginTransaction()
                             .replace(R.id.main, new FinishFragment(file, "application/pdf"))
+                            .addToBackStack("export")
                             .commit();
                 } else if (type == 1) {
+                    manager.popBackStack("export", FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     manager.beginTransaction()
                             .replace(R.id.main, new FinishFragment(file, "application/epub"))
+                            .addToBackStack("export")
                             .commit();
                 }
             });
@@ -320,7 +348,7 @@ public class ExportOptions extends Fragment {
         Constant.RESIZE_IMAGES = false;
         Constant.IMAGE_SIZE = 100;
         Constant.GRAYSCALE = false;
-        Constant.secondaryActionImpact = 0.5F;
+        Constant.secondaryActionImpact = MainConfig.reEncodeByDefault ? 0.25F : 0.5F;
     }
 
 }

@@ -69,7 +69,7 @@ public class EpubUtils {
             int max = pngFiles.size();
             for (int i = 0; i < pngFiles.size(); i++) {
                 DocumentFile pngFile = pngFiles.get(i);
-                LoadingFragment.progress += (float) ((1 / max * 100) / 2) * Constant.secondaryActionImpact;
+                LoadingFragment.progress += (float) (((1 / max) * 100) / 2) * Constant.secondaryActionImpact;
                 LoadingFragment.message = "Adding image: " + pngFile.getName();
                 indexXhtml.append("<img src=\"images/image").append(i)
                         .append(".png\" alt=\"").append(pngFile.getName())
@@ -112,7 +112,7 @@ public class EpubUtils {
             for (int i = 0; i < pngFiles.size(); i++) {
                 DocumentFile pngFile = pngFiles.get(i);
                 LoadingFragment.message = "Writing image: " + pngFile.getName();
-                LoadingFragment.progress += (float) ((0.5 / max * 100) / 2) * Constant.secondaryActionImpact;
+                LoadingFragment.progress += (float) (((1 / max) * 100) / 2) * Constant.secondaryActionImpact;
                 InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
                 if (imageStream == null) continue;
 

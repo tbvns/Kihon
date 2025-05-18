@@ -17,7 +17,9 @@ import com.google.android.material.appbar.MaterialToolbar;
 import lombok.SneakyThrows;
 import xyz.tbvns.EZConfig;
 import xyz.tbvns.kihon.Config.MainConfig;
+import xyz.tbvns.kihon.fragments.ExportOptions;
 import xyz.tbvns.kihon.fragments.FileFragment;
+import xyz.tbvns.kihon.fragments.StartFragment;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,6 +49,11 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.main, new StartFragment())
+                .disallowAddToBackStack()
+                .commit();
+
     }
 
     @Override
@@ -62,19 +69,7 @@ public class MainActivity extends AppCompatActivity {
         });
         button = findViewById(R.id.back);
         button.setOnClickListener(a -> {
-            if (!FileFragment.previousFolders.isEmpty()) {
-                getSupportFragmentManager().beginTransaction().replace(
-                        R.id.main,
-                        new FileFragment(
-                            List.of(
-                                FileFragment.previousFolders.get(
-                                        FileFragment.previousFolders.size()-1
-                                ).getParentFile().listFiles()
-                            )
-                        )
-                    ).commit();
-                FileFragment.previousFolders.remove(FileFragment.previousFolders.size()-1);
-            }
+            getSupportFragmentManager().popBackStack();
         });
     }
 
@@ -115,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.main, new FileFragment(files))
+                .addToBackStack("files")
                 .commit();
     }
 }

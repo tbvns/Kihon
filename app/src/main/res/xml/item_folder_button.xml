@@ -1,0 +1,7 @@
+<Button xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/folder_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="#383838"
+        android:textColor="#FFFFFF"
+        android:text="Folder name" />

@@ -63,7 +63,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Back"
-                        android:paddingVertical="10dp" />
+                        android:paddingVertical="10dp" android:backgroundTint="#5C5C5C" android:textColor="#FFFFFF"/>
 
                 <Space
                         android:layout_width="0dp"
@@ -72,11 +72,11 @@
 
                 <Button
                         android:id="@+id/selectMihonFolder"
-                        android:layout_width="0dp"
+                        android:layout_width="120dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Select Mihon folder"
-                        android:paddingVertical="10dp" />
+                        android:paddingVertical="10dp"/>
 
             </LinearLayout>
 
