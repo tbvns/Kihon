@@ -10,7 +10,7 @@ Kihon is a simple and **efficient** tool designed to export your Mihon manga int
 
 You can download the latest version of Kihon from the [releases page](https://github.com/tbvns/Kihon/releases/latest). Look for the file named `kihon.apk` under the **Assets** section and download it to your device. 
 
-###### This app works for Android 14+
+###### This app works for Android 12+
 
 ## How to Use  
 
