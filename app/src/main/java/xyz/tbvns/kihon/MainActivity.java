@@ -111,6 +111,6 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.main, new FileFragment(files))
                 .addToBackStack("files")
-                .commit();
+                .commitAllowingStateLoss();
     }
 }
