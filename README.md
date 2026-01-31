@@ -26,13 +26,6 @@ You can download the latest version of Kihon from the [releases page](https://gi
    - A menu will appear, allowing you to choose between **PDF or ePUB** format.  
    - Your manga will then be converted into the selected format, ready for use on any device.  
 
-## What’s New in 1.0.2?  
-
-- ✨ **New UI** for a better experience  
-- 🔙 **Back button** for easier navigation  
-- 📖 **ePUB support** – export manga in ePUB format!  
-- ✅ **Fixed progress bar** issue on export  
-
 ## Why Kihon?  
 
 Some devices, such as Amazon Kindle, do not support Mihon's default save format. Kihon bridges this gap by providing an easy-to-use solution to convert your manga into **PDF and ePUB**, ensuring compatibility across a wide range of devices.  
