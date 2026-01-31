@@ -52,7 +52,7 @@ public class FileFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
-    final HashSet<DocumentFile> selectedFiles = new HashSet<>();
+    final List<DocumentFile> selectedFiles = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -104,7 +104,7 @@ public class FileFragment extends Fragment {
         for (DocumentFile file : doc) {
             try {
                 String[] split = file.getUri().getPath().toString().split("/");
-                int id = Integer.parseInt(split[split.length-1].replaceAll("\\D", "").replace(".", "").strip());
+                int id = Integer.parseInt(split[split.length-1].split("_")[0].replaceAll("\\D", "").replace(".", "").strip());
                 filesID.put(id, file);
             } catch (Exception e) {
                 System.err.println("Error:" + e.getMessage() + ": " + file.getUri().getPath());

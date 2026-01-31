@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class ExportOptions extends Fragment {
-    private HashSet<DocumentFile> selectedFiles;
+    private List<DocumentFile> selectedFiles;
     private boolean reEncode;
 
     @Override
@@ -216,9 +216,11 @@ public class ExportOptions extends Fragment {
         HashMap<Integer, DocumentFile> filesID = new HashMap<>();
         for (DocumentFile file : doc) {
             try {
-                int id = Integer.parseInt(file.getName().replaceAll("\\D", "").replace(".", "").strip());
+                String[] split = file.getUri().getPath().toString().split("/");
+                int id = Integer.parseInt(split[split.length-1].split("_")[0].replaceAll("\\D", "").replace(".", "").strip());
                 filesID.put(id, file);
             } catch (Exception e) {
+                System.err.println("Error:" + e.getMessage() + ": " + file.getUri().getPath());
                 unsorted.add(file);
             }
         }
@@ -229,7 +231,6 @@ public class ExportOptions extends Fragment {
         sortedFiles.addAll(unsorted);
         return sortedFiles;
     }
-
 
     public static HashSet<DocumentFile> sort(HashSet<DocumentFile> doc) {
         List<DocumentFile> unsorted = new ArrayList<>();
@@ -288,7 +289,7 @@ public class ExportOptions extends Fragment {
             List<DocumentFile> pngs = new ArrayList<>();
             int max = selectedFiles.size();
             float percent = 0;
-            HashSet<DocumentFile> files = MainConfig.manualSelection ? selectedFiles : sort(selectedFiles);
+            List<DocumentFile> files = MainConfig.manualSelection ? selectedFiles : sort(selectedFiles);
             for (DocumentFile file : files) {
                 LoadingFragment.message = "Extracting: " + file.getName();
                 DocumentFile e = extractZip(context, file);

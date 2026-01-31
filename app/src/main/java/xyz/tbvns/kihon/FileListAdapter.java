@@ -16,7 +16,7 @@ import java.util.Set;
 public class FileListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final List<DocumentFile> files;
-    private final Set<DocumentFile> selectedFiles;
+    private final List<DocumentFile> selectedFiles;
     private final Context context;
     private final OnFolderClickListener onFolderClick;
 
@@ -24,7 +24,7 @@ public class FileListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         void onFolderClicked(DocumentFile folder);
     }
 
-    public FileListAdapter(Context context, List<DocumentFile> files, Set<DocumentFile> selectedFiles, OnFolderClickListener onFolderClick) {
+    public FileListAdapter(Context context, List<DocumentFile> files, List<DocumentFile> selectedFiles, OnFolderClickListener onFolderClick) {
         this.context = context;
         this.files = files;
         this.selectedFiles = selectedFiles;
