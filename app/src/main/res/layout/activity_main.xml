@@ -55,7 +55,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal" android:visibility="visible">
 
                 <Button
                         android:id="@+id/back"
@@ -68,7 +68,7 @@
                 <Space
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0.2" />
+                        android:layout_weight="0.2"/>
 
                 <Button
                         android:id="@+id/selectMihonFolder"

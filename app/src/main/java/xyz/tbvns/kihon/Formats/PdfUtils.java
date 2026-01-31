@@ -11,7 +11,8 @@ import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import xyz.tbvns.kihon.Constant;
+import xyz.tbvns.kihon.Config.ExportSetting;
+import xyz.tbvns.kihon.Constants;
 import xyz.tbvns.kihon.fragments.LoadingFragment;
 
 import java.io.ByteArrayOutputStream;
@@ -37,7 +38,7 @@ public class PdfUtils {
         try {
             for (DocumentFile pngFile : pngFiles) {
                 percent += (float) 1 / max * 100;
-                LoadingFragment.progress += (float) 1 / max * 100 * Constant.secondaryActionImpact;
+                LoadingFragment.progress += (float) 1 / max * 100 * ExportSetting.secondaryActionImpact;
                 LoadingFragment.message = "Generating PDF: " + pngFile.getParentFile().getName() + " - " + pngFile.getName();
 
                 InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
@@ -63,9 +64,9 @@ public class PdfUtils {
                 contentStream.close();
             }
 
-            DocumentFile renderedFolder = Constant.ExtractedFile.findFile("rendered");
+            DocumentFile renderedFolder = Constants.ExtractedFile.findFile("rendered");
             if (renderedFolder == null) {
-                renderedFolder = Constant.ExtractedFile.createDirectory("rendered");
+                renderedFolder = Constants.ExtractedFile.createDirectory("rendered");
             }
             if (renderedFolder == null) {
                 throw new IOException("Could not create or find the rendered folder");

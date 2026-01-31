@@ -1,41 +1,24 @@
 package xyz.tbvns.kihon.fragments;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
-import android.util.TypedValue;
-import android.view.ContextThemeWrapper;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import xyz.tbvns.kihon.Config.MainConfig;
-import xyz.tbvns.kihon.Constant;
 import xyz.tbvns.kihon.FileListAdapter;
-import xyz.tbvns.kihon.Formats.EpubUtils;
-import xyz.tbvns.kihon.Formats.PdfUtils;
 import xyz.tbvns.kihon.R;
 
-import java.io.*;
 import java.util.*;
 
 public class FileFragment extends Fragment {

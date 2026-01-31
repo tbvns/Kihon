@@ -7,17 +7,16 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
-import androidx.activity.EdgeToEdge;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
-import com.google.android.material.appbar.MaterialToolbar;
 import lombok.SneakyThrows;
 import xyz.tbvns.EZConfig;
+import xyz.tbvns.kihon.Config.ExportSetting;
 import xyz.tbvns.kihon.Config.MainConfig;
-import xyz.tbvns.kihon.fragments.ExportOptions;
 import xyz.tbvns.kihon.fragments.FileFragment;
 import xyz.tbvns.kihon.fragments.StartFragment;
 
@@ -40,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
         EZConfig.setConfigFolder(getFilesDir().getPath());
         EZConfig.getRegisteredClasses().add(MainConfig.class);
+        EZConfig.getRegisteredClasses().add(ExportSetting.class);
         EZConfig.load();
         EZConfig.save();
 
@@ -54,6 +54,13 @@ public class MainActivity extends AppCompatActivity {
                 .disallowAddToBackStack()
                 .commit();
 
+        if (!MainConfig.MihonPath.equals("null")) {
+            try {
+                listFilesInFolder(Uri.parse(MainConfig.MihonPath));
+            } catch (Exception e) {
+                Toast.makeText(this, "Failed to load Mihon folder. Please select it again.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     @Override
@@ -81,8 +88,10 @@ public class MainActivity extends AppCompatActivity {
             try {
                 getContentResolver().takePersistableUriPermission(treeUri, takeFlags);
                 Log.d("MainActivity", "Persisted URI permission for: " + treeUri.toString());
+                MainConfig.MihonPath = treeUri.toString();
+                EZConfig.save();
                 listFilesInFolder(treeUri);
-            } catch (SecurityException e) {
+            } catch (Exception e) {
                 Log.e("MainActivity", "Failed to persist URI permission: " + e.getMessage());
             }
         }
@@ -94,12 +103,12 @@ public class MainActivity extends AppCompatActivity {
         boolean createExtract = true;
         for (DocumentFile file : pickedDir.listFiles()) {
              if (file.getName().equals("extracted")) {
-                Constant.ExtractedFile = file;
+                Constants.ExtractedFile = file;
                 createExtract = false;
             }
         }
         if (createExtract) {
-            Constant.ExtractedFile = pickedDir.createDirectory("extracted");
+            Constants.ExtractedFile = pickedDir.createDirectory("extracted");
         }
         for (DocumentFile file : pickedDir.listFiles()) {
             if (file.getName().equals("downloads")) {

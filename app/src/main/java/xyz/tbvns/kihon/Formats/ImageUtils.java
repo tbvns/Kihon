@@ -3,8 +3,7 @@ package xyz.tbvns.kihon.Formats;
 import android.content.Context;
 import android.graphics.*;
 import androidx.documentfile.provider.DocumentFile;
-import xyz.tbvns.kihon.Constant;
-import xyz.tbvns.kihon.fragments.FinishFragment;
+import xyz.tbvns.kihon.Config.ExportSetting;
 import xyz.tbvns.kihon.fragments.LoadingFragment;
 
 import java.io.ByteArrayOutputStream;
@@ -42,7 +41,7 @@ public class ImageUtils {
 
     public static void processImages(Context context, List<DocumentFile> pngFiles) throws IOException {
         for (DocumentFile file : pngFiles) {
-            LoadingFragment.progress +=  ((float) 1 / pngFiles.size()) * 100 * Constant.secondaryActionImpact;
+            LoadingFragment.progress +=  ((float) 1 / pngFiles.size()) * 100 * ExportSetting.secondaryActionImpact;
             LoadingFragment.message = "Processing image: " + file.getName();
 
             if (!file.isFile() || !file.getName().toLowerCase().matches(".*\\.(png|jpg|jpeg)$")) {
@@ -54,20 +53,20 @@ public class ImageUtils {
 
                 if (bitmap == null) continue;
 
-                if (Constant.GRAYSCALE) {
+                if (ExportSetting.GRAYSCALE) {
                     bitmap = toGrayscale(bitmap);
                 }
 
-                if (Constant.RESIZE_IMAGES) {
-                    float scale = Constant.IMAGE_SIZE / 100f;
+                if (ExportSetting.RESIZE_IMAGES) {
+                    float scale = ExportSetting.IMAGE_SIZE / 100f;
                     bitmap = resizeBitmap(bitmap, scale);
                 }
 
                 try (OutputStream outputStream = context.getContentResolver().openOutputStream(file.getUri())) {
                     if (outputStream == null) continue;
 
-                    if (Constant.REENCODE_IMAGES) {
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, Constant.IMAGE_QUALITY, outputStream);
+                    if (ExportSetting.REENCODE_IMAGES) {
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, ExportSetting.IMAGE_QUALITY, outputStream);
                     } else {
                         bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                     }
