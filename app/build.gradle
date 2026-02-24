@@ -49,4 +49,8 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
+
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.1'
+    implementation 'com.fasterxml.woodstox:woodstox-core:6.5.0'
+    implementation 'javax.xml.stream:stax-api:1.0-2'
 }

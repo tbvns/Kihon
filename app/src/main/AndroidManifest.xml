@@ -16,6 +16,11 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.Material3.Dark"
             tools:targetApi="34">
+
+        <activity
+                android:name=".activity.BooksList"
+                android:exported="false"/>
+
         <activity
                 android:name=".MainActivity"
                 android:exported="true"

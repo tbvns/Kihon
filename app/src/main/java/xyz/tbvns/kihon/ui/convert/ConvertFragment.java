@@ -1,6 +1,8 @@
 package xyz.tbvns.kihon.ui.convert;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import xyz.tbvns.kihon.activity.BooksList;
 import xyz.tbvns.kihon.databinding.FragmentConvertBinding;
 import xyz.tbvns.kihon.logic.FilesLogic;
 
@@ -55,14 +58,16 @@ public class ConvertFragment extends Fragment {
                 sourceAdapter.notifyDataSetChanged();
             }
         } catch (Exception e) {
-            // Handle any errors gracefully
             e.printStackTrace();
         }
     }
 
     private void onSourceClick(String sourceTitle) {
-        // Handle source item click here
-        // For example: navigate to detail screen, show dialog, etc.
+        Log.i("TAG", "onSourceClick: " + sourceTitle);
+
+        Intent intent = new Intent(getContext(), BooksList.class);
+        intent.putExtra("folder_name", sourceTitle);
+        startActivity(intent);
     }
 
     @Override
