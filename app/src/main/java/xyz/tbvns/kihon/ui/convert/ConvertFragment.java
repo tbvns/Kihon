@@ -31,7 +31,6 @@ public class ConvertFragment extends Fragment {
         binding = FragmentConvertBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        // Setup RecyclerView with empty list first
         RecyclerView recyclerView = binding.sourcesRecyclerView;
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 

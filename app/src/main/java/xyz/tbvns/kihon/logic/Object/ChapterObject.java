@@ -22,7 +22,7 @@ public class ChapterObject {
     public String series;
 
     @JsonProperty("Number")
-    public String number;
+    public int number;
 
     @JsonProperty("Summary")
     public String summary;

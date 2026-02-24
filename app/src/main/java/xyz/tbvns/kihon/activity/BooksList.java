@@ -4,9 +4,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import xyz.tbvns.kihon.R;
 import xyz.tbvns.kihon.databinding.ActivityBooksListBinding;
 import xyz.tbvns.kihon.logic.FilesLogic;
 import xyz.tbvns.kihon.logic.Object.ChapterObject;
@@ -33,6 +35,9 @@ public class BooksList extends AppCompatActivity {
         binding = ActivityBooksListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        Button button = findViewById(R.id.proceedButton);
+        button.setEnabled(!selectedChapters.isEmpty());
+
         String start = getIntent().getStringExtra("folder_name");
         if (start == null) { finish(); return; }
 
@@ -51,7 +56,7 @@ public class BooksList extends AppCompatActivity {
 
             if (isChapterView) {
                 List<ChapterObject> chapters = FilesLogic.listChapters(folderStack.get(0), folderStack.peek());
-                for (ChapterObject c : chapters) items.add(c.title != null ? c.title : c.number);
+                for (ChapterObject c : chapters) items.add(c.title != null ? c.title : String.valueOf(c.number));
             } else {
                 items = FilesLogic.listFolder(folderName);
             }
@@ -69,6 +74,9 @@ public class BooksList extends AppCompatActivity {
             binding.sourcesRecyclerView.setAdapter(new ChapterAdapter(currentItems, selectedChapters, (name, isSelected) -> {
                 if (isSelected) selectedChapters.add(name);
                 else selectedChapters.remove(name);
+
+                Button button = findViewById(R.id.proceedButton);
+                button.setEnabled(!selectedChapters.isEmpty());
             }));
         } else {
             binding.sourcesRecyclerView.setAdapter(new SourceAdapter(currentItems, name -> loadFolder(name, true)));
