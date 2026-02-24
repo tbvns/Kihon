@@ -17,15 +17,13 @@
             android:theme="@style/Theme.Material3.Dark"
             tools:targetApi="34">
         <activity
-                android:name=".SettingsActivity"
-                android:exported="false"
-                android:theme="@style/Theme.KeeHon.NoActionbar"/>
-        <activity
                 android:name=".MainActivity"
                 android:exported="true"
-                android:theme="@style/Theme.KeeHon.NoActionbar">
+                android:label="@string/title_activity_main"
+        >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
