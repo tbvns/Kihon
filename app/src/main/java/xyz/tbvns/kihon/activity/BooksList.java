@@ -15,6 +15,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import xyz.tbvns.kihon.R;
 import xyz.tbvns.kihon.databinding.ActivityBooksListBinding;
 import xyz.tbvns.kihon.logic.FilesLogic;
+import xyz.tbvns.kihon.logic.Object.BrowserItem;
 import xyz.tbvns.kihon.logic.Object.ChapterObject;
 import xyz.tbvns.kihon.ui.convert.ChapterAdapter;
 import xyz.tbvns.kihon.ui.convert.SourceAdapter;
@@ -24,12 +25,13 @@ import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 public class BooksList extends AppCompatActivity {
     private ActivityBooksListBinding binding;
-    private final ArrayList<String> currentItems = new ArrayList<>();
+    private final ArrayList<BrowserItem> currentItems = new ArrayList<>();
+    private final ArrayList<ChapterObject> selectedChapters = new ArrayList<>();
     private final Stack<String> folderStack = new Stack<>();
-    private final HashSet<String> selectedChapters = new HashSet<>();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -42,14 +44,23 @@ public class BooksList extends AppCompatActivity {
         Button button = findViewById(R.id.proceedButton);
         button.setEnabled(false);
 
+        button.setOnClickListener(l ->{
+            ExportOptionsActivity.ExportOptionsLauncher.pendingFiles = selectedChapters;
+            ExportOptionsActivity.ExportOptionsLauncher.pendingReEncode = true;
+
+            Intent intent = new Intent(this, ExportOptionsActivity.class);
+            startActivity(intent);
+        });
+
         FloatingActionButton selectAll = findViewById(R.id.selectAll);
         selectAll.setEnabled(false);
 
         selectAll.setOnClickListener(l -> {
-            if (selectedChapters.containsAll(currentItems)) {
-                currentItems.forEach(selectedChapters::remove);
+            ArrayList<ChapterObject> usableCurrent = currentItems.stream().map(BrowserItem::getChapter).collect(Collectors.toCollection(ArrayList::new));
+            if (selectedChapters.containsAll(usableCurrent)) {
+                usableCurrent.forEach(selectedChapters::remove);
             } else {
-                selectedChapters.addAll(currentItems);
+                selectedChapters.addAll(usableCurrent);
             }
             updateSelectAllIcon(selectAll);
             updateProceedButton();
@@ -69,31 +80,37 @@ public class BooksList extends AppCompatActivity {
         if (isPush) folderStack.push(folderName);
 
         executor.execute(() -> {
-            ArrayList<String> items = new ArrayList<>();
+            ArrayList<BrowserItem> items = new ArrayList<>();
             boolean isChapterView = folderStack.size() >= 2;
 
             if (isChapterView) {
                 List<ChapterObject> chapters = FilesLogic.listChapters(folderStack.get(0), folderStack.peek());
-                for (ChapterObject c : chapters) items.add(c.title != null ? c.title : String.valueOf(c.number));
+                for (ChapterObject c : chapters) {
+                    items.add(new BrowserItem(c));
+                }
             } else {
-                items = FilesLogic.listFolder(folderName);
+                ArrayList<String> folders = FilesLogic.listFolder(folderName);
+                for (String folder : folders) {
+                    items.add(new BrowserItem(folder));
+                }
             }
 
-            ArrayList<String> finalItems = items;
-            mainHandler.post(() -> updateUI(finalItems, isChapterView));
+            mainHandler.post(() -> updateUI(items, isChapterView));
         });
     }
 
-    private void updateUI(ArrayList<String> items, boolean isChapterView) {
+    private void updateUI(ArrayList<BrowserItem> items, boolean isChapterView) {
+        ArrayList<ChapterObject> usableCurrent = currentItems.stream().map(BrowserItem::getChapter).collect(Collectors.toCollection(ArrayList::new));
         currentItems.clear();
         currentItems.addAll(items);
-
-        selectedChapters.retainAll(currentItems);
+        selectedChapters.retainAll(usableCurrent);
 
         if (isChapterView) {
             refreshChapterAdapter();
         } else {
-            binding.sourcesRecyclerView.setAdapter(new SourceAdapter(currentItems, name -> loadFolder(name, true)));
+            binding.sourcesRecyclerView.setAdapter(
+                    new SourceAdapter(currentItems, name -> loadFolder(name, true))
+            );
         }
 
         updateProceedButton();
@@ -120,7 +137,8 @@ public class BooksList extends AppCompatActivity {
     }
 
     private void updateSelectAllIcon(FloatingActionButton selectAll) {
-        if (!currentItems.isEmpty() && selectedChapters.containsAll(currentItems)) {
+        ArrayList<ChapterObject> usableCurrent = currentItems.stream().map(BrowserItem::getChapter).collect(Collectors.toCollection(ArrayList::new));
+        if (!currentItems.isEmpty() && selectedChapters.containsAll(usableCurrent)) {
             selectAll.setImageResource(R.drawable.deselect);
         } else {
             selectAll.setImageResource(R.drawable.select_all);

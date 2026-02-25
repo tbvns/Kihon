@@ -4,20 +4,24 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import androidx.recyclerview.widget.RecyclerView;
 import xyz.tbvns.kihon.databinding.ChapterComponentBinding;
+import xyz.tbvns.kihon.logic.Object.BrowserItem;
+import xyz.tbvns.kihon.logic.Object.ChapterObject;
+
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ViewHolder> {
-    private final ArrayList<String> items;
-    private final HashSet<String> selectedChapters;
+    private final ArrayList<ChapterObject> items;
+    private final ArrayList<ChapterObject> selectedChapters;
     private final OnChapterSelectListener listener;
 
     public interface OnChapterSelectListener {
-        void onToggle(String name, boolean isSelected);
+        void onToggle(ChapterObject chapterObject, boolean isSelected);
     }
 
-    public ChapterAdapter(ArrayList<String> items, HashSet<String> selectedChapters, OnChapterSelectListener listener) {
-        this.items = items;
+    public ChapterAdapter(ArrayList<BrowserItem> items, ArrayList<ChapterObject> selectedChapters, OnChapterSelectListener listener) {
+        this.items = items.stream().map(BrowserItem::getChapter).collect(Collectors.toCollection(ArrayList::new));
         this.selectedChapters = selectedChapters;
         this.listener = listener;
     }
@@ -29,21 +33,14 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String name = items.get(position);
+        ChapterObject obj = items.get(position);
+        String name = obj.title;
         holder.binding.chapterTitle.setText(name);
-
-        // 1. Remove listener before setting state to avoid "scroll-firing"
         holder.binding.chapterCheckbox.setOnCheckedChangeListener(null);
-
-        // 2. Set the state based on the Activity's HashSet
-        holder.binding.chapterCheckbox.setChecked(selectedChapters.contains(name));
-
-        // 3. Re-add listener
+        holder.binding.chapterCheckbox.setChecked(selectedChapters.contains(obj));
         holder.binding.chapterCheckbox.setOnCheckedChangeListener((btn, isChecked) -> {
-            listener.onToggle(name, isChecked);
+            listener.onToggle(obj, isChecked);
         });
-
-        // Toggle when clicking the whole row, not just the box
         holder.itemView.setOnClickListener(v -> holder.binding.chapterCheckbox.toggle());
     }
 

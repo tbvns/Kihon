@@ -1,6 +1,8 @@
 package xyz.tbvns.kihon;
 
+import android.net.Uri;
 import android.os.Bundle;
+import androidx.documentfile.provider.DocumentFile;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
@@ -27,6 +29,20 @@ public class MainActivity extends AppCompatActivity {
             EZConfig.save();
         } catch (Exception e) {
             throw new RuntimeException("Failed to load configs: " + e.getMessage());
+        }
+
+        if (Settings.mihonPath != null) {
+            DocumentFile pickedDir = DocumentFile.fromTreeUri(this, Uri.parse(Settings.mihonPath));
+            boolean createExtract = true;
+            for (DocumentFile file : pickedDir.listFiles()) {
+                if (file.getName().equals("extracted")) {
+                    Constants.ExtractedFile = file;
+                    createExtract = false;
+                }
+            }
+            if (createExtract) {
+                Constants.ExtractedFile = pickedDir.createDirectory("extracted");
+            }
         }
 
         FilesLogic.init(this);

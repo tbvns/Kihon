@@ -16,16 +16,22 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.Material3.Dark"
             tools:targetApi="34">
-
+        <activity
+                android:name=".activity.ExportOptionsActivity"
+                android:exported="false"/>
         <activity
                 android:name=".activity.BooksList"
                 android:exported="false"/>
+        <activity
+                android:name=".activity.ProgressActivity"
+                android:exported="false"
+                android:screenOrientation="portrait"
+                android:label="Loading..." />
 
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
-                android:label="@string/title_activity_main"
-        >
+                android:label="Kihon">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 

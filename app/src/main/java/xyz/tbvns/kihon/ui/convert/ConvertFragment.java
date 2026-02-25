@@ -14,13 +14,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import xyz.tbvns.kihon.activity.BooksList;
 import xyz.tbvns.kihon.databinding.FragmentConvertBinding;
 import xyz.tbvns.kihon.logic.FilesLogic;
+import xyz.tbvns.kihon.logic.Object.BrowserItem;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class ConvertFragment extends Fragment {
 
     private FragmentConvertBinding binding;
-    private ArrayList<String> sources = new ArrayList<>();
+    private ArrayList<BrowserItem> sources = new ArrayList<>();
     private SourceAdapter sourceAdapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -30,6 +32,8 @@ public class ConvertFragment extends Fragment {
 
         binding = FragmentConvertBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+
+        loadSources();
 
         RecyclerView recyclerView = binding.sourcesRecyclerView;
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -43,15 +47,15 @@ public class ConvertFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Load sources after view is created (safer lifecycle point)
-        loadSources();
     }
 
     private void loadSources() {
         try {
-            ArrayList<String> loadedSources = FilesLogic.listSources();
-            if (loadedSources != null && !loadedSources.isEmpty()) {
+            ArrayList<BrowserItem> loadedSources = FilesLogic.listSources()
+                    .stream()
+                    .map(BrowserItem::new)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            if (!loadedSources.isEmpty()) {
                 sources.clear();
                 sources.addAll(loadedSources);
                 sourceAdapter.notifyDataSetChanged();

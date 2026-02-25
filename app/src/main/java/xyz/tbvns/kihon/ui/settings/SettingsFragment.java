@@ -12,9 +12,11 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import xyz.tbvns.EZConfig;
+import xyz.tbvns.kihon.Constants;
 import xyz.tbvns.kihon.Settings;
 import xyz.tbvns.kihon.databinding.FragmentSettingsBinding;
 
@@ -23,11 +25,9 @@ public class SettingsFragment extends Fragment {
     private static final String TAG = "SettingsFragment";
     private FragmentSettingsBinding binding;
 
-    // Launcher for the folder picker intent
     private final ActivityResultLauncher<Uri> folderPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
                 if (uri != null) {
-                    // Take persistable permission so the URI survives app restarts
                     requireContext().getContentResolver().takePersistableUriPermission(
                             uri,
                             Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
@@ -37,6 +37,18 @@ public class SettingsFragment extends Fragment {
                     Settings.mihonPath = path;
                     try {
                         EZConfig.save();
+
+                        DocumentFile pickedDir = DocumentFile.fromTreeUri(requireContext(), Uri.parse(Settings.mihonPath));
+                        boolean createExtract = true;
+                        for (DocumentFile file : pickedDir.listFiles()) {
+                            if (file.getName().equals("extracted")) {
+                                Constants.ExtractedFile = file;
+                                createExtract = false;
+                            }
+                        }
+                        if (createExtract) {
+                            Constants.ExtractedFile = pickedDir.createDirectory("extracted");
+                        }
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

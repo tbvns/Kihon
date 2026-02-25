@@ -53,7 +53,6 @@ public class FilesLogic {
         DocumentFile root = DocumentFile.fromTreeUri(context, Uri.parse(Settings.mihonPath));
         DocumentFile downloads = root != null ? root.findFile("downloads") : null;
 
-        // Find the actual folder we want to look inside
         DocumentFile targetDir = findFolderRecursively(downloads, targetName);
 
         if (targetDir != null && targetDir.isDirectory()) {
@@ -152,7 +151,7 @@ public class FilesLogic {
                 try (InputStream xmlStream = zipFile.getInputStream(xmlEntry)) {
                     byte[] xmlBuffer = new byte[(int) xmlEntry.getSize()];
                     xmlStream.read(xmlBuffer);
-                    chapterObject = ChapterObject.fromString(new String(xmlBuffer));
+                    chapterObject = ChapterObject.fromString(new String(xmlBuffer), file);
                 }
             }
 

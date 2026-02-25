@@ -1,9 +1,11 @@
 package xyz.tbvns.kihon.logic.Object;
 
+import androidx.documentfile.provider.DocumentFile;
 import com.ctc.wstx.api.WstxInputProperties;
 import com.ctc.wstx.api.WstxOutputProperties;
 import com.ctc.wstx.stax.WstxInputFactory;
 import com.ctc.wstx.stax.WstxOutputFactory;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,8 +50,13 @@ public class ChapterObject {
     @JacksonXmlProperty(localName = "SourceMihon", namespace = "http://www.w3.org/2001/XMLSchema")
     public String sourceMihon;
 
-    public static ChapterObject fromString(String xml) throws JsonProcessingException {
+    @JsonIgnore
+    public DocumentFile file;
+
+    public static ChapterObject fromString(String xml, DocumentFile file) throws JsonProcessingException {
         ObjectMapper xmlMapper = new XmlMapper();
-        return xmlMapper.readValue(xml, ChapterObject.class);
+        ChapterObject obj = xmlMapper.readValue(xml, ChapterObject.class);
+        obj.file = file;
+        return obj;
     }
 }

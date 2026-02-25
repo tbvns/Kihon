@@ -8,9 +8,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import xyz.tbvns.kihon.R;
+import xyz.tbvns.kihon.logic.Object.BrowserItem;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SourceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -26,14 +29,13 @@ public class SourceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         void onSourceClick(String sourceTitle);
     }
 
-    public SourceAdapter(ArrayList<String> sources, OnSourceClickListener onSourceClickListener) {
-        this.sources = sources;
+    public SourceAdapter(ArrayList<BrowserItem> sources, OnSourceClickListener onSourceClickListener) {
+        this.sources = sources.stream().map(BrowserItem::getDisplayName).collect(Collectors.toCollection(ArrayList::new));
         this.onSourceClickListener = onSourceClickListener;
     }
 
     @Override
     public int getItemViewType(int position) {
-        // Detect if it's a chapter or a folder based on extension
         if (sources.get(position).toLowerCase().endsWith(".cbz")) {
             return TYPE_CHAPTER;
         }
@@ -69,7 +71,6 @@ public class SourceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         return sources != null ? sources.size() : 0;
     }
 
-    // FOLDER VIEW HOLDER
     public static class SourceViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleView;
 
@@ -81,8 +82,6 @@ public class SourceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         public void bind(String sourceTitle, OnSourceClickListener listener) {
             titleView.setText(sourceTitle);
 
-            // Restoration of original click behavior:
-            // Setting the listener on both the view and the title to ensure it fires
             View.OnClickListener clickListener = v -> {
                 if (listener != null) {
                     listener.onSourceClick(sourceTitle);
@@ -96,7 +95,6 @@ public class SourceAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         }
     }
 
-    // CHAPTER VIEW HOLDER
     public class ChapterViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleView;
         private final CheckBox checkBox;
