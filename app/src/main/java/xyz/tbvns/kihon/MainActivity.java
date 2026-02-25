@@ -1,5 +1,6 @@
 package xyz.tbvns.kihon;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.documentfile.provider.DocumentFile;
@@ -16,6 +17,8 @@ import xyz.tbvns.kihon.logic.FilesLogic;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+
+    boolean hadOpened = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,12 +55,17 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
 
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
+
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_convert, R.id.navigation_manage, R.id.navigation_settings)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+        if (getIntent().getBooleanExtra("manage", false)) {
+            binding.navView.setSelectedItemId(R.id.navigation_manage);
+        }
     }
 
 }

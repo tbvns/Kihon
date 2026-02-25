@@ -1,5 +1,6 @@
 package xyz.tbvns.kihon.activity;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -33,18 +34,18 @@ public class ProgressActivity extends AppCompatActivity {
 
         setFinishOnTouchOutside(false);
 
-        ProgressManager.getInstance().registerActivity(this);
+        ProgressManager.getInstance(getApplicationContext()).registerActivity(this);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        ProgressManager.getInstance().unregisterActivity();
+        ProgressManager.getInstance(getApplicationContext()).unregisterActivity();
     }
 
     @Override
     public void onBackPressed() {
-        if (!ProgressManager.getInstance().isFinished()) {
+        if (!ProgressManager.getInstance(getApplicationContext()).isFinished()) {
             return;
         }
         super.onBackPressed();

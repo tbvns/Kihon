@@ -21,7 +21,7 @@ public class PdfUtils {
     private static final String TEMP_DIR = "kihon_pdf_temp";
 
     public static DocumentFile createPdfFromPngs(Context context, List<DocumentFile> pngFiles, String pdfName) {
-        ProgressManager pm = ProgressManager.getInstance();
+        ProgressManager pm = ProgressManager.getInstance(context);
         pm.startProgress(context, "Generating PDF", "Preparing pages...");
 
         DocumentFile result = createPdfInternal(context, pngFiles, pdfName, true, null);
@@ -44,7 +44,7 @@ public class PdfUtils {
     private static DocumentFile createPdfInternal(Context context, List<DocumentFile> pngFiles,
                                                   String pdfName, boolean initProgress,
                                                   List<Integer> chapterBoundaries) {
-        ProgressManager pm = ProgressManager.getInstance();
+        ProgressManager pm = ProgressManager.getInstance(context);
         MemoryUsageSetting memSettings = MemoryUsageSetting.setupTempFileOnly();
         PDDocument document = new PDDocument(memSettings);
         PDRectangle pageSize = PDRectangle.LETTER;

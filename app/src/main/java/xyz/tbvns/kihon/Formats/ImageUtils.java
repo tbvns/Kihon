@@ -46,7 +46,7 @@ public class ImageUtils {
      * Use this when calling ImageUtils standalone.
      */
     public static void processImages(Context context, List<DocumentFile> pngFiles) throws IOException {
-        ProgressManager pm = ProgressManager.getInstance();
+        ProgressManager pm = ProgressManager.getInstance(context);
         pm.startProgress(context, "Processing Images", "Optimizing images...");
         processImagesInternal(context, pngFiles, true);
         pm.finishProgress();
@@ -66,7 +66,7 @@ public class ImageUtils {
      * @param initProgress true if this started the progress (show completion), false otherwise
      */
     private static void processImagesInternal(Context context, List<DocumentFile> pngFiles, boolean initProgress) throws IOException {
-        ProgressManager pm = ProgressManager.getInstance();
+        ProgressManager pm = ProgressManager.getInstance(context);
         int total = pngFiles.size();
 
         if (initProgress) {

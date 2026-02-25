@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import xyz.tbvns.kihon.Settings;
 import xyz.tbvns.kihon.activity.BooksList;
 import xyz.tbvns.kihon.databinding.FragmentConvertBinding;
 import xyz.tbvns.kihon.logic.FilesLogic;
@@ -40,6 +41,20 @@ public class ConvertFragment extends Fragment {
 
         sourceAdapter = new SourceAdapter(sources, this::onSourceClick);
         recyclerView.setAdapter(sourceAdapter);
+
+        if (Settings.mihonPath == null) {
+            binding.sourcesRecyclerView.setVisibility(View.GONE);
+            binding.emptyState.setVisibility(View.VISIBLE);
+
+            binding.emptyStateTitle.setText("Mihon folder not set");
+            binding.emptyStateSubtitle.setText("Set your Mihon folder path in Settings to get started");
+        } else if (sources.isEmpty()) {
+            binding.sourcesRecyclerView.setVisibility(View.GONE);
+            binding.emptyState.setVisibility(View.VISIBLE);
+
+            binding.emptyStateTitle.setText("No downloads found");
+            binding.emptyStateSubtitle.setText("Nothing has been downloaded yet, or the Mihon folder path is incorrect. You can change it in Settings");
+        }
 
         return root;
     }

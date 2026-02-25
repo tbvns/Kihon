@@ -6,24 +6,21 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import androidx.documentfile.provider.DocumentFile;
 import com.tom_roush.pdfbox.io.IOUtils;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+
 import xyz.tbvns.kihon.Settings;
 import xyz.tbvns.kihon.logic.Object.ChapterObject;
+import xyz.tbvns.kihon.logic.Object.RenderedFile;
 
 import java.io.*;
-import java.nio.channels.Channels;
-import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FilesLogic {
     private static Context context;
@@ -116,7 +113,6 @@ public class FilesLogic {
                 ChapterObject result = future.get();
                 if (result != null) {
                     chapters.add(result);
-                    Log.i("TAG", "Found XML in: " + result);
                 }
             } catch (Exception e) {
                 Log.e("TAG", "Error getting result", e);
@@ -130,39 +126,181 @@ public class FilesLogic {
     }
 
     private static ChapterObject processChapter(DocumentFile file, String fileName) {
-        try {
-            File tempFile = new File(context.getCacheDir(), fileName);
+        try (ParcelFileDescriptor pfd = context.getContentResolver()
+                .openFileDescriptor(file.getUri(), "r")) {
 
-            try (InputStream input = context.getContentResolver().openInputStream(file.getUri());
-                 FileOutputStream output = new FileOutputStream(tempFile)) {
-                byte[] buffer = new byte[8192];
-                int length;
-                while ((length = input.read(buffer)) > 0) {
-                    output.write(buffer, 0, length);
-                }
+            if (pfd == null) {
+                Log.e("TAG", "CBZ: null pfd for " + fileName);
+                return null;
             }
 
-            ZipFile zipFile = new ZipFile(tempFile);
-            ZipArchiveEntry xmlEntry = zipFile.getEntry("ComicInfo.xml");
+            try (FileChannel channel = new FileInputStream(pfd.getFileDescriptor()).getChannel();
+                 ZipFile zipFile = new ZipFile(channel)) {
 
-            ChapterObject chapterObject = null;
+                ZipArchiveEntry xmlEntry = zipFile.getEntry("ComicInfo.xml");
+                if (xmlEntry == null) {
+                    Log.w("TAG", "CBZ: no ComicInfo.xml in " + fileName);
+                    return null;
+                }
 
-            if (xmlEntry != null) {
                 try (InputStream xmlStream = zipFile.getInputStream(xmlEntry)) {
-                    byte[] xmlBuffer = new byte[(int) xmlEntry.getSize()];
-                    xmlStream.read(xmlBuffer);
-                    chapterObject = ChapterObject.fromString(new String(xmlBuffer), file);
+                    byte[] xmlBytes = IOUtils.toByteArray(xmlStream);
+                    return ChapterObject.fromString(new String(xmlBytes, StandardCharsets.UTF_8), file);
                 }
             }
-
-            zipFile.close();
-            tempFile.delete();
-
-            return chapterObject;
 
         } catch (Exception e) {
-            Log.e("TAG", "Error reading CBZ: " + fileName, e);
-            return null;
+            Log.e("TAG", "CBZ: error reading " + fileName, e);
         }
+        return null;
+    }
+
+    public static ArrayList<RenderedFile> listRendered() {
+        if (context == null || Settings.mihonPath == null || Settings.mihonPath.isEmpty())
+            return new ArrayList<>();
+
+        DocumentFile root = DocumentFile.fromTreeUri(context, Uri.parse(Settings.mihonPath));
+        if (root == null) return new ArrayList<>();
+
+        DocumentFile extracted = root.findFile("extracted");
+        if (extracted == null || !extracted.isDirectory()) return new ArrayList<>();
+
+        DocumentFile rendered = extracted.findFile("rendered");
+        if (rendered == null || !rendered.isDirectory()) return new ArrayList<>();
+
+        ArrayList<RenderedFile> results = new ArrayList<>();
+
+        for (DocumentFile file : rendered.listFiles()) {
+            if (file.isDirectory()) continue;
+
+            String fileName = file.getName();
+            if (fileName == null) continue;
+
+            String lowerName = fileName.toLowerCase();
+            String extension = null;
+
+            if (lowerName.endsWith(".pdf")) {
+                extension = "pdf";
+            } else if (lowerName.endsWith(".epub")) {
+                extension = "epub";
+            }
+
+            if (extension == null) continue;
+            String displayName = fileName.substring(0, fileName.lastIndexOf('.'));
+            long sizeBytes = file.length();
+            long lastModified = file.lastModified();
+
+            results.add(new RenderedFile(displayName, extension, sizeBytes, lastModified, file));
+        }
+
+        results.sort(Comparator.comparing(f -> f.name));
+        return results;
+    }
+
+    public static void cleanupExtractedFolder() {
+        cleanupExtractedFolder(null);
+    }
+
+    public static void cleanupExtractedFolder(ProgressManager progressManager) {
+        if (context == null || Settings.mihonPath == null || Settings.mihonPath.isEmpty()) {
+            Log.w("TAG", "Cleanup: context or path not initialized");
+            return;
+        }
+
+        try {
+            DocumentFile root = DocumentFile.fromTreeUri(context, Uri.parse(Settings.mihonPath));
+            if (root == null) {
+                Log.e("TAG", "Cleanup: root directory is null");
+                return;
+            }
+
+            DocumentFile extracted = root.findFile("extracted");
+            if (extracted == null || !extracted.isDirectory()) {
+                Log.w("TAG", "Cleanup: extracted directory not found");
+                return;
+            }
+
+            DocumentFile[] files = extracted.listFiles();
+            if (files == null || files.length == 0) {
+                return;
+            }
+
+            List<DocumentFile> foldersToDelete = new ArrayList<>();
+            for (DocumentFile file : files) {
+                if (!file.isDirectory()) continue;
+
+                String folderName = file.getName();
+                if (folderName == null || folderName.equals("rendered")) continue;
+
+                foldersToDelete.add(file);
+            }
+
+            if (foldersToDelete.isEmpty()) {
+                return;
+            }
+
+            if (progressManager != null) {
+                progressManager.setItemsCount(0, foldersToDelete.size());
+            }
+
+            int totalFolders = foldersToDelete.size();
+            AtomicInteger completedFolders = new AtomicInteger(0);
+
+            ExecutorService executor = Executors.newFixedThreadPool(4);
+            List<Future<?>> deletionFutures = new ArrayList<>();
+
+            for (DocumentFile folder : foldersToDelete) {
+                deletionFutures.add(executor.submit(() -> {
+                    String folderName = folder.getName();
+                    try {
+                        deleteDirectoryRecursive(folder);
+                        Log.d("TAG", "Cleanup: deleted folder '" + folderName + "'");
+                    } catch (Exception e) {
+                        Log.e("TAG", "Cleanup: failed to delete folder '" + folderName + "'", e);
+                    }
+
+                    int completed = completedFolders.incrementAndGet();
+
+                    if (progressManager != null) {
+                        progressManager.setItemsCount(completed, totalFolders);
+                    }
+                }));
+            }
+
+            for (Future<?> future : deletionFutures) {
+                try {
+                    future.get();
+                } catch (Exception e) {
+                    Log.e("TAG", "Cleanup: error during parallel deletion", e);
+                }
+            }
+
+            executor.shutdown();
+
+            Log.i("TAG", "Cleanup: removed " + completedFolders.get() + " folders from extracted directory");
+
+        } catch (Exception e) {
+            Log.e("TAG", "Cleanup: error during cleanup", e);
+        }
+    }
+
+    private static void deleteDirectoryRecursive(DocumentFile dir) {
+        if (!dir.isDirectory()) {
+            dir.delete();
+            return;
+        }
+
+        DocumentFile[] files = dir.listFiles();
+        if (files != null) {
+            for (DocumentFile file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectoryRecursive(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+
+        dir.delete();
     }
 }

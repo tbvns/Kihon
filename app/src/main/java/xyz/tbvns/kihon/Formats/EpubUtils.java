@@ -27,7 +27,7 @@ public class EpubUtils {
      */
     public static DocumentFile generateEpub(Context context, List<DocumentFile> pngFiles,
                                             String epubName) {
-        ProgressManager pm = ProgressManager.getInstance();
+        ProgressManager pm = ProgressManager.getInstance(context);
         pm.startProgress(context, "Generating EPUB", "Preparing files...");
 
         DocumentFile result = generateEpubInternal(context, pngFiles, epubName, true, null);
@@ -63,7 +63,7 @@ public class EpubUtils {
     private static DocumentFile generateEpubInternal(Context context, List<DocumentFile> pngFiles,
                                                      String epubName, boolean initProgress,
                                                      List<Integer> chapterBoundaries) {
-        ProgressManager pm = ProgressManager.getInstance();
+        ProgressManager pm = ProgressManager.getInstance(context);
 
         List<DocumentFile> sortedFiles = pngFiles;
         if (chapterBoundaries != null && !chapterBoundaries.isEmpty()) {

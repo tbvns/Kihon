@@ -26,6 +26,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import xyz.tbvns.EZConfig;
+import xyz.tbvns.kihon.logic.FilesLogic;
 import xyz.tbvns.kihon.logic.ProgressManager;
 import xyz.tbvns.kihon.ExportSetting;
 import xyz.tbvns.kihon.Constants;
@@ -40,6 +41,10 @@ import xyz.tbvns.kihon.logic.Sorter;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class ExportOptionsActivity extends AppCompatActivity {
@@ -472,64 +477,96 @@ public class ExportOptionsActivity extends AppCompatActivity {
     public void generate(int type, boolean reencode) {
         Context context = this;
         FragmentManager manager = getSupportFragmentManager();
-        ProgressManager pm = ProgressManager.getInstance();
+        ProgressManager pm = ProgressManager.getInstance(getApplicationContext());
 
         new Thread(() -> {
             String formatName = (type == 0) ? "PDF" : "EPUB";
             pm.startProgress(context, "Exporting " + formatName, "Extracting archives...");
             pm.setItemsCount(0, selectedFiles.size());
 
-            List<DocumentFile> pngs = new ArrayList<>();
-            List<Integer> chapterBoundaries = new ArrayList<>();  // NEW: Track chapter starts
+            // Thread-safe collections for parallel extraction
+            List<DocumentFile> pngs = Collections.synchronizedList(new ArrayList<>());
+            List<Integer> chapterBoundaries = Collections.synchronizedList(new ArrayList<>());
+            Map<Integer, List<DocumentFile>> extractedByIndex = new ConcurrentHashMap<>();
 
             int max = selectedFiles.size();
             List<DocumentFile> files = selectedFiles.stream()
                     .map(i -> i.file)
                     .collect(Collectors.toCollection(ArrayList::new));
 
+            ExecutorService extractionExecutor = Executors.newFixedThreadPool(Math.min(4, max));
+            List<Future<ExtractionResult>> extractionFutures = new ArrayList<>();
+
             for (int i = 0; i < files.size(); i++) {
-                DocumentFile file = files.get(i);
-                pm.updateMessage("Extracting: " + file.getName());
-                pm.setCurrentTask("Archive " + (i + 1) + " of " + max);
-                pm.setItemsCount(i + 1, max);
+                final int index = i;
+                final DocumentFile file = files.get(i);
 
-                chapterBoundaries.add(pngs.size());
+                extractionFutures.add(extractionExecutor.submit(() -> {
+                    pm.updateMessage("Extracting: " + file.getName());
+                    pm.setCurrentTask("Archive " + (index + 1) + " of " + max);
 
-                DocumentFile e = extractZip(context, file);
-                if (e != null) {
-                    DocumentFile[] listFiles = e.listFiles();
-
+                    DocumentFile extractedFolder = extractZip(context, file);
                     List<DocumentFile> chapterFiles = new ArrayList<>();
-                    if (listFiles != null) {
-                        for (DocumentFile listFile : listFiles) {
-                            if (listFile.isFile()) {
-                                chapterFiles.add(listFile);
+
+                    if (extractedFolder != null) {
+                        DocumentFile[] listFiles = extractedFolder.listFiles();
+
+                        if (listFiles != null) {
+                            for (DocumentFile listFile : listFiles) {
+                                if (listFile.isFile()) {
+                                    chapterFiles.add(listFile);
+                                }
                             }
                         }
+
+                        chapterFiles.sort((f1, f2) -> {
+                            String name1 = f1.getName();
+                            String name2 = f2.getName();
+
+                            if (name1 == null || name2 == null) return 0;
+
+                            Sorter.ParsedFileName p1 = Sorter.parseFileName(name1);
+                            Sorter.ParsedFileName p2 = Sorter.parseFileName(name2);
+
+                            if (p1 == null || p2 == null) return name1.compareTo(name2);
+
+                            if (p1.major != p2.major) {
+                                return Integer.compare(p1.major, p2.major);
+                            }
+                            return Integer.compare(p1.minor, p2.minor);
+                        });
                     }
 
-                    chapterFiles.sort((f1, f2) -> {
-                        String name1 = f1.getName();
-                        String name2 = f2.getName();
+                    return new ExtractionResult(index, chapterFiles);
+                }));
+            }
 
-                        if (name1 == null || name2 == null) return 0;
+            // Collect extraction results in order
+            int completedExtractions = 0;
+            for (Future<ExtractionResult> future : extractionFutures) {
+                try {
+                    ExtractionResult result = future.get();
+                    extractedByIndex.put(result.index, result.files);
+                    completedExtractions++;
 
-                        Sorter.ParsedFileName p1 = Sorter.parseFileName(name1);
-                        Sorter.ParsedFileName p2 = Sorter.parseFileName(name2);
-
-                        if (p1 == null || p2 == null) return name1.compareTo(name2);
-
-                        if (p1.major != p2.major) {
-                            return Integer.compare(p1.major, p2.major);
-                        }
-                        return Integer.compare(p1.minor, p2.minor);
-                    });
-
-                    pngs.addAll(chapterFiles);
+                    pm.setItemsCount(completedExtractions, max);
+                    int extractProgress = (int) ((float) completedExtractions / max * 40);
+                    pm.updateProgress(extractProgress);
+                } catch (Exception e) {
+                    Log.e("TAG", "Error during parallel extraction", e);
+                    pm.updateMessage("Error extracting archive: " + e.getMessage());
                 }
+            }
 
-                int extractProgress = (int) ((float) (i + 1) / max * 40);
-                pm.updateProgress(extractProgress);
+            extractionExecutor.shutdown();
+
+            // Reconstruct ordered list
+            for (int i = 0; i < max; i++) {
+                chapterBoundaries.add(pngs.size());
+                List<DocumentFile> files_i = extractedByIndex.get(i);
+                if (files_i != null) {
+                    pngs.addAll(files_i);
+                }
             }
 
             pm.updateProgress(40);
@@ -575,6 +612,11 @@ public class ExportOptionsActivity extends AppCompatActivity {
                 file = null;
             }
 
+            pm.updateMessage("Cleaning up temporary files...");
+            pm.setCurrentTask("Deleting extracted folders");
+            FilesLogic.cleanupExtractedFolder(pm);
+            pm.updateProgress(95);
+
             if (file != null) {
                 pm.updateProgress(100);
                 pm.updateMessage("Export completed successfully!");
@@ -585,22 +627,13 @@ public class ExportOptionsActivity extends AppCompatActivity {
                 pm.setCurrentTask("Failed");
                 try { Thread.sleep(2000); } catch (InterruptedException ex) {}
             }
+
             pm.finishProgress();
 
             final DocumentFile finalFile = file;
             new Handler(Looper.getMainLooper()).post(() -> {
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    if (type == 0) {
-                        try {
-                            manager.popBackStack("export", FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                            manager.beginTransaction()
-                                    .setReorderingAllowed(true)
-                                    .addToBackStack("export")
-                                    .commitAllowingStateLoss();
-                        } catch (IllegalStateException e) {
-                            Log.e("ExportOptions", "Fragment transaction failed", e);
-                        }
-                    } else if (type == 1) {
+                    if (type == 0 || type == 1) {
                         try {
                             manager.popBackStack("export", FragmentManager.POP_BACK_STACK_INCLUSIVE);
                             manager.beginTransaction()
@@ -614,6 +647,16 @@ public class ExportOptionsActivity extends AppCompatActivity {
                 }, 1500);
             });
         }).start();
+    }
+
+    private static class ExtractionResult {
+        final int index;
+        final List<DocumentFile> files;
+
+        ExtractionResult(int index, List<DocumentFile> files) {
+            this.index = index;
+            this.files = files;
+        }
     }
 
     private void resetConstants() {
