@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:orientation="vertical" app:layout_constraintTop_toTopOf="parent"
+                  app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+                  app:layout_constraintBottom_toBottomOf="parent" android:id="@+id/linearLayout">
+
+        <!--    <androidx.appcompat.widget.Toolbar-->
+        <!--            android:id="@+id/toolbar"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="?attr/actionBarSize"-->
+        <!--            android:background="?attr/colorPrimary"-->
+        <!--            app:titleTextColor="@android:color/white" />-->
+
+        <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/sources_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:padding="8dp" android:fadingEdge="vertical" android:fadingEdgeLength="8dp"
+                android:requiresFadingEdge="vertical"/>
+
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="60dp" android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp" android:layout_marginBottom="8dp"
+                android:gravity="center"> <!-- Fix the height of the row -->
+
+            <Button
+                    android:id="@+id/proceedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="10"
+                    android:text="Proceed"
+                    android:backgroundTint="@color/button_background_tint"
+                    android:textAllCaps="true"
+                    android:textColor="#323232"
+                    android:layout_marginRight="8dp"/>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true" app:srcCompat="@drawable/select_all"
+                    android:id="@+id/selectAll" app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_weight="0" app:backgroundTint="@color/select_all_background_tint"
+                    app:tint="#323232"
+            />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

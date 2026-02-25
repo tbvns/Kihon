@@ -17,15 +17,24 @@
             android:theme="@style/Theme.Material3.Dark"
             tools:targetApi="34">
         <activity
-                android:name=".SettingsActivity"
+                android:name=".activity.ExportOptionsActivity"
+                android:exported="false"/>
+        <activity
+                android:name=".activity.BooksList"
+                android:exported="false"/>
+        <activity
+                android:name=".activity.ProgressActivity"
                 android:exported="false"
-                android:theme="@style/Theme.KeeHon.NoActionbar"/>
+                android:screenOrientation="portrait"
+                android:label="Loading..." />
+
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
-                android:theme="@style/Theme.KeeHon.NoActionbar">
+                android:label="Kihon">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>

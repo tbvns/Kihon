@@ -3,123 +3,69 @@ package xyz.tbvns.kihon;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-
-import android.util.Log;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
-import lombok.SneakyThrows;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 import xyz.tbvns.EZConfig;
-import xyz.tbvns.kihon.Config.ExportSetting;
-import xyz.tbvns.kihon.Config.MainConfig;
-import xyz.tbvns.kihon.fragments.FileFragment;
-import xyz.tbvns.kihon.fragments.StartFragment;
-
-import java.util.Arrays;
-import java.util.List;
+import xyz.tbvns.kihon.databinding.ActivityMainBinding;
+import xyz.tbvns.kihon.logic.FilesLogic;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_CODE_FOLDER = 123; // Define your request code
 
-    @SneakyThrows //Yea I know this shit is bad but idc it looks better !
+    private ActivityMainBinding binding;
+
+    boolean hadOpened = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
-        EZConfig.setConfigFolder(getFilesDir().getPath());
-        EZConfig.getRegisteredClasses().add(MainConfig.class);
-        EZConfig.getRegisteredClasses().add(ExportSetting.class);
-        EZConfig.load();
-        EZConfig.save();
+        //Load settings
+        try {
+            EZConfig.getRegisteredClasses().add(Settings.class);
+            EZConfig.setConfigFolder(getFilesDir().getPath());
+            EZConfig.load();
+            EZConfig.save();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load configs: " + e.getMessage());
+        }
 
-        ImageButton topAppBar = findViewById(R.id.settingIcon);
-        topAppBar.setOnClickListener(view -> {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-        });
-
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.main, new StartFragment())
-                .disallowAddToBackStack()
-                .commit();
-
-        if (!MainConfig.MihonPath.equals("null")) {
-            try {
-                listFilesInFolder(Uri.parse(MainConfig.MihonPath));
-            } catch (Exception e) {
-                Toast.makeText(this, "Failed to load Mihon folder. Please select it again.", Toast.LENGTH_LONG).show();
+        if (Settings.mihonPath != null) {
+            DocumentFile pickedDir = DocumentFile.fromTreeUri(this, Uri.parse(Settings.mihonPath));
+            boolean createExtract = true;
+            for (DocumentFile file : pickedDir.listFiles()) {
+                if (file.getName().equals("extracted")) {
+                    Constants.ExtractedFile = file;
+                    createExtract = false;
+                }
             }
+            if (createExtract) {
+                Constants.ExtractedFile = pickedDir.createDirectory("extracted");
+            }
+        }
+
+        FilesLogic.init(this);
+
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        BottomNavigationView navView = findViewById(R.id.nav_view);
+
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
+
+        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_convert, R.id.navigation_manage, R.id.navigation_settings)
+                .build();
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        NavigationUI.setupWithNavController(binding.navView, navController);
+
+        if (getIntent().getBooleanExtra("manage", false)) {
+            binding.navView.setSelectedItemId(R.id.navigation_manage);
         }
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Button button = findViewById(R.id.selectMihonFolder);
-        button.setOnClickListener(a -> {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
-                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            startActivityForResult(intent, REQUEST_CODE_FOLDER);
-        });
-        button = findViewById(R.id.back);
-        button.setOnClickListener(a -> {
-            getSupportFragmentManager().popBackStack();
-        });
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE_FOLDER && resultCode == RESULT_OK && data != null) {
-            Uri treeUri = data.getData();
-            final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            try {
-                getContentResolver().takePersistableUriPermission(treeUri, takeFlags);
-                Log.d("MainActivity", "Persisted URI permission for: " + treeUri.toString());
-                MainConfig.MihonPath = treeUri.toString();
-                EZConfig.save();
-                listFilesInFolder(treeUri);
-            } catch (Exception e) {
-                Log.e("MainActivity", "Failed to persist URI permission: " + e.getMessage());
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    private void listFilesInFolder(Uri folderUri) {
-        DocumentFile pickedDir = DocumentFile.fromTreeUri(this, folderUri);
-        boolean createExtract = true;
-        for (DocumentFile file : pickedDir.listFiles()) {
-             if (file.getName().equals("extracted")) {
-                Constants.ExtractedFile = file;
-                createExtract = false;
-            }
-        }
-        if (createExtract) {
-            Constants.ExtractedFile = pickedDir.createDirectory("extracted");
-        }
-        for (DocumentFile file : pickedDir.listFiles()) {
-            if (file.getName().equals("downloads")) {
-                pickedDir = file;
-            }
-        }
-        List<DocumentFile> files = Arrays.asList(pickedDir.listFiles());
-
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.main, new FileFragment(files))
-                .addToBackStack("files")
-                .commitAllowingStateLoss();
-    }
 }

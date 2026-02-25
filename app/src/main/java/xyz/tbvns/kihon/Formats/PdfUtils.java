@@ -1,52 +1,95 @@
 package xyz.tbvns.kihon.Formats;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
-import android.widget.Toast;
 
 import androidx.documentfile.provider.DocumentFile;
+import com.tom_roush.pdfbox.io.MemoryUsageSetting;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import xyz.tbvns.kihon.Config.ExportSetting;
+import xyz.tbvns.kihon.logic.ProgressManager;
 import xyz.tbvns.kihon.Constants;
-import xyz.tbvns.kihon.fragments.LoadingFragment;
+import xyz.tbvns.kihon.logic.Sorter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
-import java.util.Locale;
 
 public class PdfUtils {
 
+    private static final String TEMP_DIR = "kihon_pdf_temp";
+
     public static DocumentFile createPdfFromPngs(Context context, List<DocumentFile> pngFiles, String pdfName) {
-        PDDocument document = new PDDocument();
+        ProgressManager pm = ProgressManager.getInstance(context);
+        pm.startProgress(context, "Generating PDF", "Preparing pages...");
+
+        DocumentFile result = createPdfInternal(context, pngFiles, pdfName, true, null);
+
+        pm.updateProgress(100);
+        pm.updateMessage("PDF created successfully!");
+        pm.setCurrentTask("Complete");
+
+        try { Thread.sleep(1500); } catch (InterruptedException e) {}
+        pm.finishProgress();
+
+        return result;
+    }
+
+    public static DocumentFile createPdfFromPngsNoInit(Context context, List<DocumentFile> pngFiles,
+                                                       String pdfName, List<Integer> chapterBoundaries) {
+        return createPdfInternal(context, pngFiles, pdfName, false, chapterBoundaries);
+    }
+
+    private static DocumentFile createPdfInternal(Context context, List<DocumentFile> pngFiles,
+                                                  String pdfName, boolean initProgress,
+                                                  List<Integer> chapterBoundaries) {
+        ProgressManager pm = ProgressManager.getInstance(context);
+        MemoryUsageSetting memSettings = MemoryUsageSetting.setupTempFileOnly();
+        PDDocument document = new PDDocument(memSettings);
         PDRectangle pageSize = PDRectangle.LETTER;
 
-        new Handler(Looper.getMainLooper()).post(() -> {
-            Toast.makeText(context, "Generating PDF...", Toast.LENGTH_LONG).show();
-        });
+        List<DocumentFile> sortedFiles = pngFiles;
+        if (chapterBoundaries != null && !chapterBoundaries.isEmpty()) {
+            sortedFiles = Sorter.sortByChapterThenByMajorMinor(pngFiles, chapterBoundaries);
+        }
 
-        int max = pngFiles.size();
-        float percent = 0;
+        int max = sortedFiles.size();
+        if (initProgress) {
+            pm.setItemsCount(0, max);
+        }
+
+        File tempDir = new File(context.getCacheDir(), TEMP_DIR);
+        if (!tempDir.exists()) {
+            tempDir.mkdirs();
+        }
 
         try {
-            for (DocumentFile pngFile : pngFiles) {
-                percent += (float) 1 / max * 100;
-                LoadingFragment.progress += (float) 1 / max * 100 * ExportSetting.secondaryActionImpact;
-                LoadingFragment.message = "Generating PDF: " + pngFile.getParentFile().getName() + " - " + pngFile.getName();
+            for (int index = 0; index < sortedFiles.size(); index++) {
+                DocumentFile pngFile = sortedFiles.get(index);
+
+                pm.updateMessage("Processing: " + pngFile.getName());
+                pm.setCurrentTask("Page " + (index + 1) + " of " + max);
+                pm.setItemsCount(index + 1, max);
 
                 InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
-                if (imageStream == null) continue;
-                byte[] imageBytes = toByteArray(imageStream);
+                if (imageStream == null) {
+                    pm.updateMessage("Skipping: " + pngFile.getName() + " (cannot read)");
+                    continue;
+                }
+
+                File tempImageFile = new File(tempDir, "temp_" + index + ".png");
+                try (OutputStream tempOut = new FileOutputStream(tempImageFile)) {
+                    byte[] buffer = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = imageStream.read(buffer)) != -1) {
+                        tempOut.write(buffer, 0, bytesRead);
+                    }
+                }
                 imageStream.close();
 
-                PDImageXObject pdImage = PDImageXObject.createFromByteArray(document, imageBytes, pngFile.getName());
+                PDImageXObject pdImage = PDImageXObject.createFromFile(
+                        tempImageFile.getAbsolutePath(), document);
 
                 PDPage page = new PDPage(pageSize);
                 document.addPage(page);
@@ -62,7 +105,21 @@ public class PdfUtils {
                 PDPageContentStream contentStream = new PDPageContentStream(document, page);
                 contentStream.drawImage(pdImage, posX, posY, drawWidth, drawHeight);
                 contentStream.close();
+
+                tempImageFile.delete();
+
+                if (initProgress) {
+                    int progress = (int) ((float) (index + 1) / max * 100);
+                    pm.updateProgress(progress);
+                } else {
+                    int progress = 60 + (int) ((float) (index + 1) / max * 40);
+                    pm.updateProgress(progress);
+                }
             }
+
+            pm.updateProgress(initProgress ? 95 : 95);
+            pm.updateMessage("Creating PDF file...");
+            pm.setCurrentTask("Saving PDF");
 
             DocumentFile renderedFolder = Constants.ExtractedFile.findFile("rendered");
             if (renderedFolder == null) {
@@ -81,35 +138,55 @@ public class PdfUtils {
             if (outputStream == null) {
                 throw new IOException("Could not open output stream for PDF file");
             }
+
+            pm.updateMessage("Writing PDF data...");
+            pm.setCurrentTask("Compressing file");
+            pm.updateProgress(initProgress ? 98 : 98);
+
             document.save(outputStream);
             outputStream.close();
             document.close();
-            new Handler(Looper.getMainLooper()).post(() -> {
-                Toast.makeText(context, String.format(Locale.getDefault(), "PDF created: %s", pdfFile.getUri().toString()), Toast.LENGTH_LONG).show();
-            });
+
+            if (initProgress) {
+                pm.updateProgress(100);
+                pm.updateMessage("PDF created successfully!");
+                pm.setCurrentTask("Complete");
+            } else {
+                pm.updateProgress(100);
+            }
+
             return pdfFile;
 
         } catch (IOException e) {
             e.printStackTrace();
+            pm.updateMessage("Error: " + e.getMessage());
+            pm.setCurrentTask("Failed");
+
+            if (initProgress) {
+                try { Thread.sleep(2000); } catch (InterruptedException ex) { ex.printStackTrace(); }
+            }
+
             try {
                 document.close();
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-            new Handler(Looper.getMainLooper()).post(() -> {
-                Toast.makeText(context, "Error creating PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+        } finally {
+            cleanupTempDirectory(tempDir);
         }
+
         return null;
     }
 
-    private static byte[] toByteArray(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buffer = new byte[4096];
-        int read;
-        while ((read = in.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
+    private static void cleanupTempDirectory(File dir) {
+        if (dir != null && dir.exists()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
+            }
+            dir.delete();
         }
-        return out.toByteArray();
     }
 }
