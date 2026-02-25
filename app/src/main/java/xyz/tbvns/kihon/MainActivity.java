@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
         //Load settings
         try {
             EZConfig.getRegisteredClasses().add(Settings.class);
+            EZConfig.getRegisteredClasses().add(ExportSetting.class);
             EZConfig.setConfigFolder(getFilesDir().getPath());
             EZConfig.load();
             EZConfig.save();
