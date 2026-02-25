@@ -1,13 +1,17 @@
 package xyz.tbvns.kihon.activity;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import xyz.tbvns.kihon.R;
 import xyz.tbvns.kihon.databinding.ActivityBooksListBinding;
 import xyz.tbvns.kihon.logic.FilesLogic;
@@ -36,7 +40,21 @@ public class BooksList extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         Button button = findViewById(R.id.proceedButton);
-        button.setEnabled(!selectedChapters.isEmpty());
+        button.setEnabled(false);
+
+        FloatingActionButton selectAll = findViewById(R.id.selectAll);
+        selectAll.setEnabled(false);
+
+        selectAll.setOnClickListener(l -> {
+            if (selectedChapters.containsAll(currentItems)) {
+                currentItems.forEach(selectedChapters::remove);
+            } else {
+                selectedChapters.addAll(currentItems);
+            }
+            updateSelectAllIcon(selectAll);
+            updateProceedButton();
+            refreshChapterAdapter();
+        });
 
         String start = getIntent().getStringExtra("folder_name");
         if (start == null) { finish(); return; }
@@ -70,18 +88,43 @@ public class BooksList extends AppCompatActivity {
         currentItems.clear();
         currentItems.addAll(items);
 
-        if (isChapterView) {
-            binding.sourcesRecyclerView.setAdapter(new ChapterAdapter(currentItems, selectedChapters, (name, isSelected) -> {
-                if (isSelected) selectedChapters.add(name);
-                else selectedChapters.remove(name);
+        selectedChapters.retainAll(currentItems);
 
-                Button button = findViewById(R.id.proceedButton);
-                button.setEnabled(!selectedChapters.isEmpty());
-            }));
+        if (isChapterView) {
+            refreshChapterAdapter();
         } else {
             binding.sourcesRecyclerView.setAdapter(new SourceAdapter(currentItems, name -> loadFolder(name, true)));
         }
+
+        updateProceedButton();
+        updateSelectAllIcon(findViewById(R.id.selectAll));
         updateToolbarTitle();
+    }
+
+    private void refreshChapterAdapter() {
+        binding.sourcesRecyclerView.setAdapter(new ChapterAdapter(currentItems, selectedChapters, (name, isSelected) -> {
+            if (isSelected) selectedChapters.add(name);
+            else selectedChapters.remove(name);
+
+            updateProceedButton();
+            updateSelectAllIcon(findViewById(R.id.selectAll));
+        }));
+    }
+
+    private void updateProceedButton() {
+        Button button = findViewById(R.id.proceedButton);
+        button.setEnabled(!selectedChapters.isEmpty());
+
+        FloatingActionButton fab = findViewById(R.id.selectAll);
+        fab.setEnabled(folderStack.size() >= 2);
+    }
+
+    private void updateSelectAllIcon(FloatingActionButton selectAll) {
+        if (!currentItems.isEmpty() && selectedChapters.containsAll(currentItems)) {
+            selectAll.setImageResource(R.drawable.deselect);
+        } else {
+            selectAll.setImageResource(R.drawable.select_all);
+        }
     }
 
     private void updateToolbarTitle() {

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Enabled: Soft Blue-Grey -->
+    <item android:state_enabled="true" android:color="#D1D9E0" />
+    <!-- Disabled: Muted Mid-Grey -->
+    <item android:color="#8E979E" />
+</selector>
