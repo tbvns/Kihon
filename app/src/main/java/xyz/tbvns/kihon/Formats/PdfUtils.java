@@ -9,6 +9,7 @@ import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import xyz.tbvns.kihon.ExportSetting;
 import xyz.tbvns.kihon.logic.ProgressManager;
 import xyz.tbvns.kihon.Constants;
 import xyz.tbvns.kihon.logic.Sorter;
@@ -65,6 +66,11 @@ public class PdfUtils {
         }
 
         try {
+            boolean grayscale = ExportSetting.GRAYSCALE;
+            boolean resize = ExportSetting.RESIZE_IMAGES;
+            float resizePercent = ExportSetting.IMAGE_SIZE;
+            int quality = ExportSetting.IMAGE_QUALITY;
+
             for (int index = 0; index < sortedFiles.size(); index++) {
                 DocumentFile pngFile = sortedFiles.get(index);
 
@@ -78,15 +84,25 @@ public class PdfUtils {
                     continue;
                 }
 
-                File tempImageFile = new File(tempDir, "temp_" + index + ".png");
-                try (OutputStream tempOut = new FileOutputStream(tempImageFile)) {
-                    byte[] buffer = new byte[8192];
-                    int bytesRead;
-                    while ((bytesRead = imageStream.read(buffer)) != -1) {
-                        tempOut.write(buffer, 0, bytesRead);
-                    }
-                }
+                // Process image with all settings – always use JPEG for PDF
+                byte[] processed = ImageUtils.processImageToBytes(
+                        imageStream,
+                        grayscale,
+                        resize,
+                        resizePercent,
+                        true,   // PDF works best with JPEG
+                        quality
+                );
                 imageStream.close();
+                if (processed == null) {
+                    pm.updateMessage("Skipped: " + pngFile.getName() + " (invalid image)");
+                    continue;
+                }
+
+                File tempImageFile = new File(tempDir, "temp_" + index + ".jpg");
+                try (FileOutputStream fos = new FileOutputStream(tempImageFile)) {
+                    fos.write(processed);
+                }
 
                 PDImageXObject pdImage = PDImageXObject.createFromFile(
                         tempImageFile.getAbsolutePath(), document);

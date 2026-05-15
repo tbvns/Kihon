@@ -46,7 +46,7 @@
                     android:id="@+id/reencodeSwitch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Re-encode images"
+                    android:text="Re-encode images to JPEG"
                     android:paddingBottom="8dp" android:paddingTop="8dp"/>
 
             <LinearLayout
