@@ -250,14 +250,20 @@ public class EpubUtils {
             if (initProgress) {
                 pm.updateMessage("Adding images to EPUB...");
             }
+
+            boolean useJpeg = ExportSetting.REENCODE_IMAGES;
+            boolean grayscale = ExportSetting.GRAYSCALE;
+            boolean resize = ExportSetting.RESIZE_IMAGES;
+            float resizePercent = ExportSetting.IMAGE_SIZE;
+            int quality = ExportSetting.IMAGE_QUALITY;
+
             for (int i = 0; i < sortedFiles.size(); i++) {
                 DocumentFile pngFile = sortedFiles.get(i);
                 pm.updateMessage("Adding image: " + pngFile.getName());
                 pm.setCurrentTask("Image " + (i + 1) + " of " + max);
                 pm.setItemsCount(i + 1, max);
 
-                InputStream imageStream = context.getContentResolver()
-                        .openInputStream(pngFile.getUri());
+                InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
                 if (imageStream == null) continue;
 
                 // Process with all settings
@@ -269,13 +275,8 @@ public class EpubUtils {
                 String ext = useJpeg ? ".jpg" : ".png";
                 ZipEntry imageEntry = new ZipEntry("OEBPS/images/image" + i + ext);
                 zos.putNextEntry(imageEntry);
-                byte[] buffer = new byte[8192];
-                int len;
-                while ((len = imageStream.read(buffer)) != -1) {
-                    zos.write(buffer, 0, len);
-                }
+                zos.write(imageData);
                 zos.closeEntry();
-                imageStream.close();
 
                 // Update progress proportionally based on whether we initialized
                 if (initProgress) {

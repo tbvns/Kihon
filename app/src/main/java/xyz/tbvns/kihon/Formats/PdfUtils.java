@@ -66,6 +66,11 @@ public class PdfUtils {
         }
 
         try {
+            boolean grayscale = ExportSetting.GRAYSCALE;
+            boolean resize = ExportSetting.RESIZE_IMAGES;
+            float resizePercent = ExportSetting.IMAGE_SIZE;
+            int quality = ExportSetting.IMAGE_QUALITY;
+
             for (int index = 0; index < sortedFiles.size(); index++) {
                 DocumentFile pngFile = sortedFiles.get(index);
 
@@ -89,6 +94,15 @@ public class PdfUtils {
                         quality
                 );
                 imageStream.close();
+                if (processed == null) {
+                    pm.updateMessage("Skipped: " + pngFile.getName() + " (invalid image)");
+                    continue;
+                }
+
+                File tempImageFile = new File(tempDir, "temp_" + index + ".jpg");
+                try (FileOutputStream fos = new FileOutputStream(tempImageFile)) {
+                    fos.write(processed);
+                }
 
                 PDImageXObject pdImage = PDImageXObject.createFromFile(
                         tempImageFile.getAbsolutePath(), document);
