@@ -14,6 +14,37 @@ import java.util.List;
 
 public class ImageUtils {
 
+    /**
+     * Process an image with grayscale, resizing, and optional JPEG conversion.
+     * Returns the final image bytes ready for writing to EPUB/PDF.
+     */
+    public static byte[] processImageToBytes(InputStream inputStream,
+                                             boolean grayscale,
+                                             boolean resize,
+                                             float resizePercent,
+                                             boolean useJpeg,
+                                             int jpegQuality) throws IOException {
+        Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+        if (bitmap == null) return null;
+
+        if (grayscale) {
+            bitmap = toGrayscale(bitmap);
+        }
+        if (resize) {
+            float scale = resizePercent / 100f;
+            bitmap = resizeBitmap(bitmap, scale);
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        if (useJpeg) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, jpegQuality, out);
+        } else {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+        }
+        bitmap.recycle();
+        return out.toByteArray();
+    }
+
     public static byte[] reencodeToJpeg(InputStream inputStream, int quality) throws IOException {
         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
 

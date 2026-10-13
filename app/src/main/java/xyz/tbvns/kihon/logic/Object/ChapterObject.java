@@ -65,6 +65,10 @@ public class ChapterObject {
     @Nullable
     public String sourceMihon;
 
+    @JacksonXmlProperty(localName = "SourceAniyomi", namespace = "http://www.w3.org/2001/XMLSchema")
+    @Nullable
+    public String sourceAniyomi;
+
     @JsonIgnore
     public DocumentFile file;
 

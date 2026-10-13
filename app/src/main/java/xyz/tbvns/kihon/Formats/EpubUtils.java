@@ -136,7 +136,7 @@ public class EpubUtils {
             for (int i = 0; i < sortedFiles.size(); i++) {
                 DocumentFile pngFile = sortedFiles.get(i);
                 indexXhtml.append("<img src=\"images/image").append(i)
-                        .append(".png\" alt=\"").append(pngFile.getName())
+                        .append(ExportSetting.REENCODE_IMAGES ? ".jpg\" alt=\"" : ".png\" alt=\"")
                         .append("\"/><br/>\n");
             }
             indexXhtml.append("</body>\n")
@@ -165,7 +165,7 @@ public class EpubUtils {
                     int coverPageIndex = ExportSetting.COVER_PAGE_INDEX;
                     manifestItems.append("<item id=\"").append(coverImageId)
                             .append("\" href=\"images/image").append(coverPageIndex)
-                            .append(".png\" media-type=\"image/png\" ")
+                            .append(ExportSetting.REENCODE_IMAGES ? ".jpg\" media-type=\"image/jpeg\" " : ".png\" media-type=\"image/png\" ")
                             .append("properties=\"cover-image\"/>\n");
                     metadataItems.append("<meta name=\"cover\" content=\"")
                             .append(coverImageId).append("\"/>\n");
@@ -209,7 +209,7 @@ public class EpubUtils {
             for (int i = 0; i < sortedFiles.size(); i++) {
                 contentOpf.append("<item id=\"img").append(i)
                         .append("\" href=\"images/image").append(i)
-                        .append(".png\" media-type=\"image/png\"/>\n");
+                        .append(ExportSetting.REENCODE_IMAGES ? ".jpg\" media-type=\"image/jpeg\"/>\n" : ".png\" media-type=\"image/png\"/>\n");
             }
 
             contentOpf.append("</manifest>\n")
@@ -250,25 +250,33 @@ public class EpubUtils {
             if (initProgress) {
                 pm.updateMessage("Adding images to EPUB...");
             }
+
+            boolean useJpeg = ExportSetting.REENCODE_IMAGES;
+            boolean grayscale = ExportSetting.GRAYSCALE;
+            boolean resize = ExportSetting.RESIZE_IMAGES;
+            float resizePercent = ExportSetting.IMAGE_SIZE;
+            int quality = ExportSetting.IMAGE_QUALITY;
+
             for (int i = 0; i < sortedFiles.size(); i++) {
                 DocumentFile pngFile = sortedFiles.get(i);
                 pm.updateMessage("Adding image: " + pngFile.getName());
                 pm.setCurrentTask("Image " + (i + 1) + " of " + max);
                 pm.setItemsCount(i + 1, max);
 
-                InputStream imageStream = context.getContentResolver()
-                        .openInputStream(pngFile.getUri());
+                InputStream imageStream = context.getContentResolver().openInputStream(pngFile.getUri());
                 if (imageStream == null) continue;
 
-                ZipEntry imageEntry = new ZipEntry("OEBPS/images/image" + i + ".png");
-                zos.putNextEntry(imageEntry);
-                byte[] buffer = new byte[8192];
-                int len;
-                while ((len = imageStream.read(buffer)) != -1) {
-                    zos.write(buffer, 0, len);
-                }
-                zos.closeEntry();
+                // Process with all settings
+                byte[] imageData = ImageUtils.processImageToBytes(
+                        imageStream, grayscale, resize, resizePercent, useJpeg, quality);
                 imageStream.close();
+                if (imageData == null) continue;
+
+                String ext = useJpeg ? ".jpg" : ".png";
+                ZipEntry imageEntry = new ZipEntry("OEBPS/images/image" + i + ext);
+                zos.putNextEntry(imageEntry);
+                zos.write(imageData);
+                zos.closeEntry();
 
                 // Update progress proportionally based on whether we initialized
                 if (initProgress) {
